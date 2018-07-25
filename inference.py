@@ -45,9 +45,6 @@ def main(argv=None):
     model = load_model(path_model, custom_objects={'mean_iou': mean_iou})
     preds_test = model.predict(X_test, verbose=1)
 
-    # Threshold predictions
-    preds_test_t = (preds_test > 0.5).astype(np.uint8)
-
     preds_test_upsampled = []
     for i in tnrange(len(preds_test)):
         preds_test_upsampled.append(
