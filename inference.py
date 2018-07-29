@@ -16,11 +16,7 @@ from metrics import mean_iou
 from config import *
 
 tf.flags.DEFINE_string(
-    'input_train', None,
-    """path to train data""")
-
-tf.flags.DEFINE_string(
-    'input_test', None,
+    'input', None,
     """path to test data""")
 
 tf.flags.DEFINE_string(
@@ -39,8 +35,8 @@ def main(argv=None):
     if not tf.gfile.Exists(os.path.dirname(FLAGS.submission)):
         tf.gfile.MakeDirs(os.path.dirname(FLAGS.submission))
 
-    test_ids = next(os.walk(os.path.join(FLAGS.input_test, "images")))[2]
-    X_test = input_test(FLAGS.input_test)
+    test_ids = next(os.walk(os.path.join(FLAGS.input, "images")))[2]
+    X_test = input_test(FLAGS.input)
     path_model = os.path.join(FLAGS.model, name_model)
     model = load_model(path_model, custom_objects={'mean_iou': mean_iou})
     preds_test = model.predict(X_test, verbose=1)
