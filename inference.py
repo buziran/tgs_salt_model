@@ -5,6 +5,7 @@ import os
 
 import pandas as pd
 import numpy as np
+import sys
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from skimage.transform import resize
@@ -12,7 +13,7 @@ from tqdm import tnrange, tqdm_notebook
 
 from util import RLenc
 from input import input_test
-from metrics import mean_iou
+from metrics import mean_iou, mean_score
 from config import *
 
 tf.flags.DEFINE_string(
@@ -27,6 +28,10 @@ tf.flags.DEFINE_string(
     'submission', 'output/submission.csv',
     """path to submission file""")
 
+tf.flags.DEFINE_bool(
+    'debug', False,
+    """Inference only 10 images""")
+
 FLAGS = tf.flags.FLAGS
 
 
@@ -37,8 +42,12 @@ def main(argv=None):
 
     test_ids = next(os.walk(os.path.join(FLAGS.input, "images")))[2]
     X_test = input_test(FLAGS.input)
+
+    if FLAGS.debug:
+        X_test = X_test[:10]
+
     path_model = os.path.join(FLAGS.model, name_model)
-    model = load_model(path_model, custom_objects={'mean_iou': mean_iou})
+    model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score})
     preds_test = model.predict(X_test, verbose=1)
 
     preds_test_upsampled = []
@@ -48,6 +57,7 @@ def main(argv=None):
                    (orig_height, orig_width),
                    mode='constant', preserve_range=True))
 
+    # 四捨五入している
     pred_dict = {fn[:-4]: RLenc(np.round(preds_test_upsampled[i])) for i, fn in tqdm_notebook(enumerate(test_ids))}
 
     sub = pd.DataFrame.from_dict(pred_dict, orient='index')
