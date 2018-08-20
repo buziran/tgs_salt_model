@@ -14,12 +14,8 @@ from metrics import mean_iou, mean_score
 from config import *
 
 tf.flags.DEFINE_string(
-    'input_train', None,
+    'input', None,
     """path to train data""")
-
-tf.flags.DEFINE_string(
-    'input_test', None,
-    """path to test data""")
 
 tf.flags.DEFINE_string(
     'model', 'output/model',
@@ -51,7 +47,7 @@ def eval(dir_train):
 
 
 def main(argv=None):
-    eval(FLAGS.input_train)
+    eval(FLAGS.input)
 
 
 if __name__ == '__main__':

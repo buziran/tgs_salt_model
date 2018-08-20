@@ -18,6 +18,9 @@ tf.flags.DEFINE_string(
 tf.flags.DEFINE_string(
     'log', 'output/log', """path to log directory""")
 
+tf.flags.DEFINE_integer(
+    'epochs', 30, """path to log directory""")
+
 FLAGS = tf.flags.FLAGS
 
 
@@ -34,7 +37,7 @@ def train(X_train, Y_train):
     earlystopper = EarlyStopping(patience=5, verbose=1)
     checkpointer = ModelCheckpoint(path_model, verbose=1, save_best_only=True)
     tensorboarder = TensorBoard(FLAGS.log)
-    results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=8, epochs=30,
+    results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=8, epochs=FLAGS.epochs,
                         callbacks=[earlystopper, checkpointer, tensorboarder])
 
 
