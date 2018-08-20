@@ -10,7 +10,7 @@ from absl import app, flags
 import git
 from googleapiclient.http import MediaFileUpload
 
-from service_manager import ServiceManager
+from .service_manager import ServiceManager
 
 FLAGS = flags.FLAGS
 
@@ -21,13 +21,13 @@ flags.DEFINE_string(
     'config', os.path.join(os.path.dirname(__file__), 'config.json'), 'path to GCP token file.')
 
 
-def result_upload(name, path, summay):
+def result_upload(name, path, summary):
     service_manager = ServiceManager(FLAGS.credentials)
     config = get_config()
     service = service_manager.get_drive_service()
     drive_path = upload_outputs(service, name, path, config)
 
-    job_info = get_job_info(name, summay, drive_path)
+    job_info = get_job_info(name, summary, drive_path)
     service = service_manager.get_sheets_service()
     append_row(service, job_info, config)
 

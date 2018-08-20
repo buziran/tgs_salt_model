@@ -26,7 +26,6 @@ def mean_score(y_true, y_pred):
 
     def _mean_score(y):
         y0, y1 = y[0], y[1]
-        # y0 = tf.Print(y0, [tf.shape(y0), tf.shape(y1)], message="shapes ")
         total_cm = tf.confusion_matrix(y0, y1, num_classes=2)
         sum_over_row = tf.to_float(tf.reduce_sum(total_cm, 0))
         sum_over_col = tf.to_float(tf.reduce_sum(total_cm, 1))
