@@ -6,6 +6,7 @@ import sys
 from pprint import pprint
 import json
 
+import datetime
 from absl import app, flags
 import git
 from googleapiclient.http import MediaFileUpload
@@ -21,13 +22,13 @@ flags.DEFINE_string(
     'config', os.path.join(os.path.dirname(__file__), 'config.json'), 'path to GCP token file.')
 
 
-def result_upload(name, path, summary):
+def result_upload(name, datetime_str, path, summary):
     service_manager = ServiceManager(FLAGS.credentials)
     config = get_config()
     service = service_manager.get_drive_service()
     drive_path = upload_outputs(service, name, path, config)
 
-    job_info = get_job_info(name, summary, drive_path)
+    job_info = create_job_info(name, datetime_str, summary, drive_path)
     service = service_manager.get_sheets_service()
     append_row(service, job_info, config)
 
@@ -38,11 +39,11 @@ def get_config():
     return config
 
 
-def get_job_info(name, summary, drive_path):
+def create_job_info(name, datetime_str, summary, drive_path):
     command = " ".join(sys.argv)
     repo = git.Repo(os.path.dirname(__file__), search_parent_directories=True)
     commit = repo.head.object.hexsha
-    job_info = [name, commit, command, drive_path, summary]
+    job_info = [name, datetime_str, commit, command, drive_path, summary]
     return job_info
 
 
@@ -107,17 +108,3 @@ def upload_outputs(service, name, output_dir, config):
     return drive_path
 
 
-def main(argv):
-    service_manager = ServiceManager(FLAGS.credentials)
-
-    config = get_config()
-    service = service_manager.get_drive_service()
-    drive_path = upload_outputs(service, "test", "./output", config)
-
-    job_info = get_job_info("test", "this is debug", drive_path)
-    service = service_manager.get_sheets_service()
-    append_row(service, job_info, config)
-
-
-if __name__ == '__main__':
-    app.run(main)

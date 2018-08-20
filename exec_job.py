@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 import shlex
 import subprocess
+
+import datetime
+
 from gcp.upload import result_upload
 
 import sys
@@ -18,6 +21,8 @@ OUTPUT_PATH = "./output"
 
 
 def main(argv):
+
+    datetime_str = str(datetime.datetime.now())
 
     if FLAGS.train is not None:
         subprocess.run(shlex.split(FLAGS.train), check=True)
@@ -41,7 +46,7 @@ def main(argv):
         print("summary: \"{}\"".format(summary))
 
     if not FLAGS["dry-run"].value:
-        result_upload(FLAGS.name, OUTPUT_PATH, summary)
+        result_upload(FLAGS.name, datetime_str, OUTPUT_PATH, summary)
 
 
 if __name__ == '__main__':
