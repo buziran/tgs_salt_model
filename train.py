@@ -19,7 +19,7 @@ tf.flags.DEFINE_string(
     'log', 'output/log', """path to log directory""")
 
 tf.flags.DEFINE_integer(
-    'epochs', 30, """path to log directory""")
+    'epochs', 100, """path to log directory""")
 
 tf.flags.DEFINE_integer(
     'batch_size', 8, """batch size""")
@@ -39,7 +39,7 @@ tf.flags.DEFINE_bool(
     'vertical_flip', False, """whether to apply vertical flip""")
 
 tf.flags.DEFINE_integer(
-    'rotate_range', 0, """random rotation range""")
+    'rotation_range', 0, """random rotation range""")
 
 tf.flags.DEFINE_float(
     'zoom_range', 0., """random zoom range""")
@@ -58,7 +58,7 @@ def augment_dict():
     return dict(
         horizontal_flip=FLAGS.horizontal_flip,
         vertical_flip=FLAGS.vertical_flip,
-        rotate_range=FLAGS.rotate_range,
+        rotation_range=FLAGS.rotate_range,
         zoom_range=FLAGS.zoom_range,
         fill_mode=FLAGS.fill_mode)
 
