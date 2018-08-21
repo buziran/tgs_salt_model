@@ -30,7 +30,7 @@ tf.flags.DEFINE_integer(
 
 """Augmentations"""
 tf.flags.DEFINE_bool(
-    'legacy', True, """whether to use legacy code""")
+    'legacy', False, """whether to use legacy code""")
 
 tf.flags.DEFINE_bool(
     'horizontal_flip', False, """whether to apply horizontal flip""")
@@ -58,7 +58,7 @@ def augment_dict():
     return dict(
         horizontal_flip=FLAGS.horizontal_flip,
         vertical_flip=FLAGS.vertical_flip,
-        rotation_range=FLAGS.rotate_range,
+        rotation_range=FLAGS.rotation_range,
         zoom_range=FLAGS.zoom_range,
         fill_mode=FLAGS.fill_mode)
 

@@ -41,7 +41,8 @@ def yn(message):
 
 def main(argv):
 
-    check_commit()
+    if not FLAGS.force:
+        check_commit()
 
     datetime_str = str(datetime.datetime.now())
 
