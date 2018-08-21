@@ -15,6 +15,7 @@ flags.DEFINE_string("train", None, """train command.""")
 flags.DEFINE_string("eval", None, """evaluation command.""")
 flags.DEFINE_string("name", "no-name", """name of job""")
 flags.DEFINE_bool("dry-run", False, """Do not upload anything""", short_name="n")
+flags.DEFINE_bool("force", False, """Ignore un-committed files""", short_name="f")
 
 FLAGS = flags.FLAGS
 
