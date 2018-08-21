@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from tqdm import tqdm_notebook
 from skimage.transform import resize
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.image import load_img, img_to_array, ImageDataGenerator
 
 from config import *
 
@@ -29,6 +29,27 @@ def input_train(path_train):
     print('Done!')
 
     return X_train, Y_train
+
+
+def create_generator(X_train, Y_train, batch_size=8, shuffle=True, validation_split=0.1):
+    data_gen_args = dict(horizontal_flip=True)
+    train_ratio = 1. - validation_split
+    _X_train, _Y_train = X_train[:int(X_train.shape[0] * train_ratio)], Y_train[:int(X_train.shape[0] * train_ratio)]
+    _X_valid, _Y_valid = X_train[int(X_train.shape[0] * train_ratio):], Y_train[int(X_train.shape[0] * train_ratio):]
+    seed = 1
+    X_train_datagen = ImageDataGenerator(**data_gen_args)
+    Y_train_datagen = ImageDataGenerator(**data_gen_args)
+    X_train_generator = X_train_datagen.flow(_X_train, seed=seed, batch_size=batch_size, shuffle=shuffle)
+    Y_train_generator = Y_train_datagen.flow(_Y_train, seed=seed, batch_size=batch_size, shuffle=shuffle)
+    train_generator = zip(X_train_generator, Y_train_generator)
+
+    X_valid_datagen = ImageDataGenerator()
+    Y_valid_datagen = ImageDataGenerator()
+    X_valid_generator = X_valid_datagen.flow(_X_valid, batch_size=batch_size, shuffle=False)
+    Y_valid_generator = Y_valid_datagen.flow(_Y_valid, batch_size=batch_size, shuffle=False)
+    valid_generator = zip(X_valid_generator, Y_valid_generator)
+
+    return train_generator, valid_generator
 
 
 def input_test(path_test):
