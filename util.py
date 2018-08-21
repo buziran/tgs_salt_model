@@ -1,3 +1,6 @@
+import math
+
+
 def RLenc(img, order='F', format=True):
     """
     img is binary mask image, shape (r,c)
@@ -34,3 +37,14 @@ def RLenc(img, order='F', format=True):
         return z[:-1]
     else:
         return runs
+
+
+class StepDecay(object):
+    def __init__(self, lr, decay, epochs_decay=10):
+        self.lr = lr
+        self.decay = decay
+        self.epochs_decay = epochs_decay
+
+    def __call__(self, epoch):
+       lr_cur = self.lr * math.pow(self.decay, math.floor((1+epoch)/self.epochs_decay))
+       return lr_cur

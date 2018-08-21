@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model
 from metrics import mean_iou, mean_score
 
 
-def build_model(height, width, channels):
+def build_model(height, width, channels, optimizer='adam'):
     inputs = Input((height, width, channels))
     s = Lambda(lambda x: x / 255)(inputs)
 
@@ -53,7 +53,7 @@ def build_model(height, width, channels):
     outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[mean_iou, mean_score])
+    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[mean_iou, mean_score])
     return model
 
 
