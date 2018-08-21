@@ -8,6 +8,7 @@ import datetime
 from gcp.upload import result_upload
 
 import sys
+from git import Repo
 from absl import app, flags
 
 flags.DEFINE_string("train", None, """train command.""")
@@ -19,8 +20,27 @@ FLAGS = flags.FLAGS
 
 OUTPUT_PATH = "./output"
 
+def check_commit():
+    repo = Repo()
+    not_committed_files = repo.index.diff(None)
+    untracked_files = repo.untracked_files
+
+    if len(untracked_files) != 0 or len(list(not_committed_files)) != 0:
+        print("There are some untracked file or not-commited file in repository")
+        subprocess.run(["git", "status"])
+        assert yn("Are you sure you want to run the job?")
+
+
+def yn(message):
+    while True:
+        answer = input(message + ' [y/N]: ')
+        if len(answer) > 0 and answer[0].lower() in ('y', 'n'):
+            return answer[0].lower() == 'y'
+
 
 def main(argv):
+
+    check_commit()
 
     datetime_str = str(datetime.datetime.now())
 
