@@ -6,7 +6,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoa
 import tensorflow.keras.backend as K
 
 from model import build_model
-from input import input_train, create_generator
+from input import Dataset
 from config import *
 
 tf.flags.DEFINE_string(
@@ -24,17 +24,46 @@ tf.flags.DEFINE_integer(
 tf.flags.DEFINE_integer(
     'batch_size', 8, """batch size""")
 
+tf.flags.DEFINE_integer(
+    'idx_kfold', 0, help="""index of k-fold cross validation. index must be in 0~9""")
+
+
+"""Augmentations"""
 tf.flags.DEFINE_bool(
-    'augment', True, """whether to apply augmentation""")
+    'legacy', True, """whether to use legacy code""")
+
+tf.flags.DEFINE_bool(
+    'horizontal_flip', False, """whether to apply horizontal flip""")
+
+tf.flags.DEFINE_bool(
+    'vertical_flip', False, """whether to apply vertical flip""")
+
+tf.flags.DEFINE_integer(
+    'rotate_range', 0, """random rotation range""")
+
+tf.flags.DEFINE_float(
+    'zoom_range', 0., """random zoom range""")
+
+tf.flags.DEFINE_enum(
+    'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
 FLAGS = tf.flags.FLAGS
 
+N_SPLITS = 10
 BATCH_SIZE = 8
-VALIDATION_SPLIT = 0.1
 INPUT_WORKERS = 4
 
 
-def train(X_train, Y_train):
+def augment_dict():
+    return dict(
+        horizontal_flip=FLAGS.horizontal_flip,
+        vertical_flip=FLAGS.vertical_flip,
+        rotate_range=FLAGS.rotate_range,
+        zoom_range=FLAGS.zoom_range,
+        fill_mode=FLAGS.fill_mode)
+
+
+def train(dataset):
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
             per_process_gpu_memory_fraction=0.9, allow_growth=True)))
@@ -47,25 +76,17 @@ def train(X_train, Y_train):
     earlystopper = EarlyStopping(patience=5, verbose=1)
     checkpointer = ModelCheckpoint(path_model, verbose=1, save_best_only=True)
     tensorboarder = TensorBoard(FLAGS.log)
-    if not FLAGS.augment:
+    if FLAGS.legacy:
+        VALIDATION_SPLIT = 0.1
         results = model.fit(
-            X_train, Y_train, validation_split=VALIDATION_SPLIT, batch_size=FLAGS.batch_size, epochs=FLAGS.epochs,
+            dataset.X_samples, dataset.Y_samples, validation_split=VALIDATION_SPLIT,
+            batch_size=FLAGS.batch_size, epochs=FLAGS.epochs,
             callbacks=[earlystopper, checkpointer, tensorboarder])
     else:
-        num_train_image = int(X_train.shape[0] * (1. - VALIDATION_SPLIT))
-        num_valid_image = int(X_train.shape[0] * VALIDATION_SPLIT)
-        steps_per_epoch = int(num_train_image / FLAGS.batch_size)
-        validation_steps = int(num_valid_image / FLAGS.batch_size)
-        train_generator, valid_generator = create_generator(
-            X_train, Y_train, batch_size=FLAGS.batch_size, validation_split=VALIDATION_SPLIT)
-
-        # import numpy as np
-        # for e in range(FLAGS.epochs):
-        #     for i, (x, y) in enumerate(train_generator):
-        #         if i == 0:
-        #             print(np.sum(y))
-        #         if i == steps_per_epoch - 1:
-        #             break
+        train_generator, valid_generator = dataset.create_generator(
+            n_splits=N_SPLITS, idx_kfold=FLAGS.idx_kfold, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
+        steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
+        validation_steps = int(dataset.num_valid / FLAGS.batch_size)
 
         results = model.fit_generator(
             generator=train_generator, validation_data=valid_generator,
@@ -75,7 +96,7 @@ def train(X_train, Y_train):
 
 
 def main(argv=None):
-    X_train, Y_train = input_train(FLAGS.input)
+    dataset = Dataset(FLAGS.input)
 
     if tf.gfile.Exists(FLAGS.model):
         tf.gfile.DeleteRecursively(FLAGS.model)
@@ -84,7 +105,7 @@ def main(argv=None):
         tf.gfile.DeleteRecursively(FLAGS.log)
     tf.gfile.MakeDirs(FLAGS.log)
 
-    train(X_train, Y_train)
+    train(dataset)
 
 if __name__ == '__main__':
     tf.app.run()
