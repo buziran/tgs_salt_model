@@ -16,7 +16,14 @@ def mean_iou(y_true, y_pred):
 
 
 def mean_score(y_true, y_pred):
-    y_true_ = tf.cast(y_true, tf.bool)
+    """
+    Calculate mean score for batch images
+
+    :param y_true: 4-D Tensor of ground truth, such as [NHWC]. Should have numeric or boolean type.
+    :param y_pred: 4-D Tensor of prediction, such as [NHWC]. Should have numeric or boolean type.
+    :return: 0-D Tensor of score
+    """
+    y_true_ = tf.cast(tf.round(y_true), tf.bool)
     y_pred_ = tf.cast(tf.round(y_pred), tf.bool)
 
     # 画像ごとにflatten
@@ -25,6 +32,7 @@ def mean_score(y_true, y_pred):
     threasholds_iou = tf.constant(np.arange(0.5, 1.0, 0.05), dtype=tf.float32)
 
     def _mean_score(y):
+        """Calculate score per image"""
         y0, y1 = y[0], y[1]
         total_cm = tf.confusion_matrix(y0, y1, num_classes=2)
         sum_over_row = tf.to_float(tf.reduce_sum(total_cm, 0))
