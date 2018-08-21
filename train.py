@@ -35,7 +35,7 @@ tf.flags.DEFINE_float(
     'lr', 0.001, help="""initial value of learning rate""")
 
 tf.flags.DEFINE_float(
-    'lr_decay', 0.0, help="""decay factor for learning rate""")
+    'lr_decay', 1.0, help="""decay factor for learning rate""")
 
 tf.flags.DEFINE_integer(
     'epochs_decay', 10, help="""decay epoch of learning rate""")
