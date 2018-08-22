@@ -89,7 +89,9 @@ def train(dataset):
             per_process_gpu_memory_fraction=0.9, allow_growth=True)))
     K.set_session(sess)
     with tf.device('/gpu:0'):
-        model = build_model(im_height, im_width, im_chan, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)
+        model = build_model(im_height, im_width, im_chan, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice)
+
+    print(model.summary())
 
     path_model = os.path.join(FLAGS.model, name_model)
 

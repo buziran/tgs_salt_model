@@ -4,10 +4,10 @@
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 
-from metrics import mean_iou, mean_score
+from metrics import mean_iou, mean_score, bce_dice_loss
 
 
-def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimizer='adam'):
+def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimizer='adam', dice=False):
     inputs = Input((height, width, channels))
     s = Lambda(lambda x: x / 255)(inputs)
 
@@ -68,6 +68,11 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimiz
     outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
+    if dice:
+        loss = bce_dice_loss
+    else:
+        loss = 'binary_crossentropy'
+
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[mean_iou, mean_score])
     return model
 
