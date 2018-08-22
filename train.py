@@ -20,7 +20,7 @@ tf.flags.DEFINE_string(
     'log', 'output/log', """path to log directory""")
 
 tf.flags.DEFINE_integer(
-    'epochs', 200, """path to log directory""")
+    'epochs', 300, """path to log directory""")
 
 tf.flags.DEFINE_integer(
     'batch_size', 32, """batch size""")
@@ -59,7 +59,7 @@ tf.flags.DEFINE_bool(
     'vertical_flip', True, """whether to apply vertical flip""")
 
 tf.flags.DEFINE_integer(
-    'rotation_range', 10, """random rotation range""")
+    'rotation_range', 30, """random rotation range""")
 
 tf.flags.DEFINE_float(
     'zoom_range', 0.1, """random zoom range""")
