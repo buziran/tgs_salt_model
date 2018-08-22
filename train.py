@@ -23,7 +23,7 @@ tf.flags.DEFINE_integer(
     'epochs', 200, """path to log directory""")
 
 tf.flags.DEFINE_integer(
-    'batch_size', 8, """batch size""")
+    'batch_size', 32, """batch size""")
 
 tf.flags.DEFINE_integer(
     'idx_kfold', 0, help="""index of k-fold cross validation. index must be in 0~9""")
