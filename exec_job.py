@@ -46,6 +46,8 @@ def main(argv):
 
     datetime_str = str(datetime.datetime.now())
 
+    proc_tb = subprocess.Popen(["tensorboard", "--logdir", "."])
+
     if FLAGS.train is not None:
         subprocess.run(shlex.split(FLAGS.train), check=True)
 
@@ -66,6 +68,8 @@ def main(argv):
 
         summary = last_line.replace('\n', '').replace('\r', '')
         print("summary: \"{}\"".format(summary))
+
+    proc_tb.kill()
 
     if not FLAGS["dry-run"].value:
         result_upload(FLAGS.name, datetime_str, OUTPUT_PATH, summary)
