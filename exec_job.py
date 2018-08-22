@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import shlex
+import shutil
 import subprocess
 
 import datetime
+
+import os
 
 from gcp.upload import result_upload
 
@@ -11,8 +15,9 @@ import sys
 from git import Repo
 from absl import app, flags
 
-flags.DEFINE_string("train", None, """train command.""")
-flags.DEFINE_string("eval", None, """evaluation command.""")
+flags.DEFINE_string("preprocess", "rm -rf ./output", """preprocess command.""")
+flags.DEFINE_string("train", "", """train command.""")
+flags.DEFINE_string("eval", "", """evaluation command.""")
 flags.DEFINE_string("name", "no-name", """name of job""")
 flags.DEFINE_bool("dry-run", False, """Do not upload anything""", short_name="n")
 flags.DEFINE_bool("force", False, """Ignore un-committed files""", short_name="f")
@@ -20,6 +25,7 @@ flags.DEFINE_bool("force", False, """Ignore un-committed files""", short_name="f
 FLAGS = flags.FLAGS
 
 OUTPUT_PATH = "./output"
+
 
 def check_commit():
     repo = Repo()
@@ -46,13 +52,16 @@ def main(argv):
 
     datetime_str = str(datetime.datetime.now())
 
-    proc_tb = subprocess.Popen(["tensorboard", "--logdir", "."])
+    if FLAGS.preprocess != "":
+        subprocess.run(shlex.split(FLAGS.preprocess), check=False)
 
-    if FLAGS.train is not None:
+    if FLAGS.train != "":
+        proc_tb = subprocess.Popen(["tensorboard", "--logdir", "."])
         subprocess.run(shlex.split(FLAGS.train), check=True)
+        proc_tb.kill()
 
     summary = ""
-    if FLAGS.eval is not None:
+    if FLAGS.eval != "":
         proc = subprocess.Popen(FLAGS.eval, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         last_line = ""
@@ -69,7 +78,6 @@ def main(argv):
         summary = last_line.replace('\n', '').replace('\r', '')
         print("summary: \"{}\"".format(summary))
 
-    proc_tb.kill()
 
     if not FLAGS["dry-run"].value:
         result_upload(FLAGS.name, datetime_str, OUTPUT_PATH, summary)
