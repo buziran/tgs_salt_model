@@ -8,7 +8,7 @@ import tensorflow.keras.backend as K
 from model import build_model
 from input import Dataset
 from config import *
-from util import StepDecay
+from util import StepDecay, MyTensorBoard
 
 tf.flags.DEFINE_string(
     'input', None, """path to train data""")
@@ -86,7 +86,7 @@ def train(dataset):
     path_model = os.path.join(FLAGS.model, name_model)
 
     checkpointer = ModelCheckpoint(path_model, monitor='val_mean_score', verbose=1, save_best_only=True, mode='max')
-    tensorboarder = TensorBoard(FLAGS.log)
+    tensorboarder = MyTensorBoard(FLAGS.log, model=model)
     lrscheduler = LearningRateScheduler(StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay), verbose=1)
 
     callbacks = [checkpointer, tensorboarder, lrscheduler]

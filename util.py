@@ -1,5 +1,8 @@
 import math
 
+from tensorflow.python.keras.callbacks import TensorBoard
+import tensorflow.keras.backend as K
+
 
 def RLenc(img, order='F', format=True):
     """
@@ -48,3 +51,14 @@ class StepDecay(object):
     def __call__(self, epoch):
        lr_cur = self.lr * math.pow(self.decay, math.floor((1+epoch)/self.epochs_decay))
        return lr_cur
+
+
+class MyTensorBoard(TensorBoard):
+    def __init__(self, log_dir, model):
+        super().__init__(log_dir=log_dir)
+        self.model = model
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs.update({'lr': K.eval(self.model.optimizer.lr)})
+        super().on_epoch_end(epoch, logs)
+
