@@ -45,22 +45,24 @@ tf.flags.DEFINE_bool('batch_norm', False, """whether to use batch-normalization"
 
 tf.flags.DEFINE_float('drop_out', 0.0, """whether to use drop-out""")
 
+tf.flags.DEFINE_bool('dice', False, """whether to use dice loss""")
+
 
 """Augmentations"""
 tf.flags.DEFINE_bool(
     'legacy', False, """whether to use legacy code""")
 
 tf.flags.DEFINE_bool(
-    'horizontal_flip', False, """whether to apply horizontal flip""")
+    'horizontal_flip', True, """whether to apply horizontal flip""")
 
 tf.flags.DEFINE_bool(
-    'vertical_flip', False, """whether to apply vertical flip""")
+    'vertical_flip', True, """whether to apply vertical flip""")
 
 tf.flags.DEFINE_integer(
-    'rotation_range', 0, """random rotation range""")
+    'rotation_range', 10, """random rotation range""")
 
 tf.flags.DEFINE_float(
-    'zoom_range', 0., """random zoom range""")
+    'zoom_range', 0.1, """random zoom range""")
 
 tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
