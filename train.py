@@ -20,7 +20,7 @@ tf.flags.DEFINE_string(
     'log', 'output/log', """path to log directory""")
 
 tf.flags.DEFINE_integer(
-    'epochs', 100, """path to log directory""")
+    'epochs', 200, """path to log directory""")
 
 tf.flags.DEFINE_integer(
     'batch_size', 8, """batch size""")
@@ -39,6 +39,12 @@ tf.flags.DEFINE_float(
 
 tf.flags.DEFINE_integer(
     'epochs_decay', 10, help="""decay epoch of learning rate""")
+
+"""Model"""
+tf.flags.DEFINE_bool('batch_norm', False, """whether to use batch-normalization""")
+
+tf.flags.DEFINE_float('drop_out', 0.0, """whether to use drop-out""")
+
 
 """Augmentations"""
 tf.flags.DEFINE_bool(
@@ -81,7 +87,7 @@ def train(dataset):
             per_process_gpu_memory_fraction=0.9, allow_growth=True)))
     K.set_session(sess)
     with tf.device('/gpu:0'):
-        model = build_model(im_height, im_width, im_chan)
+        model = build_model(im_height, im_width, im_chan, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)
 
     path_model = os.path.join(FLAGS.model, name_model)
 
