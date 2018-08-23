@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras import backend as K
+import tensorflow.keras.losses
 
 from input import input_train, input_test
-from metrics import mean_iou, mean_score
+from metrics import mean_iou, mean_score, bce_dice_loss
 from config import *
 
 tf.flags.DEFINE_string(
@@ -21,7 +22,11 @@ tf.flags.DEFINE_string(
     'model', 'output/model',
     """path to model directory""")
 
+tf.flags.DEFINE_bool('dice', False, """whether to use dice loss""")
+
 FLAGS = tf.flags.FLAGS
+
+tensorflow.keras.losses.bce_dice_loss = bce_dice_loss
 
 
 def eval(dir_train):
@@ -36,7 +41,12 @@ def eval(dir_train):
     with tf.Graph().as_default():
         with tf.Session(config=config) as sess:
             K.set_session(sess)
-            model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score})
+            model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score}, compile=False)
+            if FLAGS.dice:
+                loss = bce_dice_loss
+            else:
+                loss = 'binary_crossentropy'
+            model.compile(optimizer="adam", loss=loss, metrics=[mean_iou, mean_score])
 
             metrics = model.evaluate(
                 X_train[:int(X_train.shape[0] * 0.9)], Y_train[:int(X_train.shape[0] * 0.9)], batch_size=8, verbose=1)
