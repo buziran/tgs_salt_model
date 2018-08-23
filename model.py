@@ -73,7 +73,7 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimiz
     else:
         loss = 'binary_crossentropy'
 
-    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[mean_iou, mean_score])
+    model.compile(optimizer=optimizer, loss=loss, metrics=[mean_iou, mean_score])
     return model
 
 
