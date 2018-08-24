@@ -4,3 +4,7 @@ im_height = 128
 im_width = 128
 im_chan = 1
 name_model = 'model-tgs-salt-1.h5'
+N_SPLITS = 10
+BATCH_SIZE = 8
+INPUT_WORKERS = 4
+

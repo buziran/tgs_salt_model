@@ -11,13 +11,13 @@ from config import *
 from util import StepDecay, MyTensorBoard
 
 tf.flags.DEFINE_string(
-    'input', None, """path to train data""")
+    'input', "../input/train", """path to train data""")
 
 tf.flags.DEFINE_string(
-    'model', 'output/model', """path to model directory""")
+    'model', './output/model', """path to model directory""")
 
 tf.flags.DEFINE_string(
-    'log', 'output/log', """path to log directory""")
+    'log', './output/log', """path to log directory""")
 
 tf.flags.DEFINE_integer(
     'epochs', 300, """path to log directory""")
@@ -26,7 +26,7 @@ tf.flags.DEFINE_integer(
     'batch_size', 32, """batch size""")
 
 tf.flags.DEFINE_integer(
-    'idx_kfold', 0, help="""index of k-fold cross validation. index must be in 0~9""")
+    'cv', 0, help="""index of k-fold cross validation. index must be in 0~9""")
 
 tf.flags.DEFINE_bool(
     'early_stopping', False, help="""whether to apply early-stopping""")
@@ -68,10 +68,6 @@ tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
 FLAGS = tf.flags.FLAGS
-
-N_SPLITS = 10
-BATCH_SIZE = 8
-INPUT_WORKERS = 4
 
 
 def augment_dict():
