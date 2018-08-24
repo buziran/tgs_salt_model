@@ -62,7 +62,7 @@ tf.flags.DEFINE_integer(
     'rotation_range', 30, """random rotation range""")
 
 tf.flags.DEFINE_float(
-    'zoom_range', 0.1, """random zoom range""")
+    'zoom_range', 0.2, """random zoom range""")
 
 tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
@@ -107,7 +107,7 @@ def train(dataset):
             callbacks=callbacks)
     else:
         train_generator, valid_generator = dataset.create_generator(
-            n_splits=N_SPLITS, idx_kfold=FLAGS.idx_kfold, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
+            n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
         steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
         validation_steps = int(dataset.num_valid / FLAGS.batch_size)
 

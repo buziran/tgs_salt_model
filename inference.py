@@ -16,7 +16,7 @@ from metrics import mean_iou, mean_score, bce_dice_loss
 from config import *
 
 tf.flags.DEFINE_string(
-    'input', None,
+    'input', '../input/test',
     """path to test data""")
 
 tf.flags.DEFINE_string(
