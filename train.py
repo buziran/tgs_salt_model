@@ -64,6 +64,9 @@ tf.flags.DEFINE_integer(
 tf.flags.DEFINE_float(
     'zoom_range', 0.2, """random zoom range""")
 
+tf.flags.DEFINE_float(
+    'shift_range', 0.0, """random shift range""")
+
 tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
@@ -76,6 +79,8 @@ def augment_dict():
         vertical_flip=FLAGS.vertical_flip,
         rotation_range=FLAGS.rotation_range,
         zoom_range=FLAGS.zoom_range,
+        width_shift_range=FLAGS.shift_range,
+        height_shift_range=FLAGS.shift_range,
         fill_mode=FLAGS.fill_mode)
 
 
