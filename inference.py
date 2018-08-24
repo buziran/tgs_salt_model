@@ -5,7 +5,6 @@ import os
 
 import pandas as pd
 import numpy as np
-import sys
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from skimage.transform import resize
@@ -13,7 +12,7 @@ from tqdm import tnrange, tqdm_notebook
 
 from util import RLenc
 from input import input_test
-from metrics import mean_iou, mean_score
+from metrics import mean_iou, mean_score, bce_dice_loss
 from config import *
 
 tf.flags.DEFINE_string(
@@ -47,7 +46,8 @@ def main(argv=None):
         X_test = X_test[:10]
 
     path_model = os.path.join(FLAGS.model, name_model)
-    model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score})
+    model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score}, compile=False)
+    model.compile(optimizer="adam", loss='binary_crossentropy', metrics=[mean_iou, mean_score])
     preds_test = model.predict(X_test, verbose=1)
 
     preds_test_upsampled = []

@@ -26,7 +26,7 @@ tf.flags.DEFINE_integer(
     'cv', 0,
     """index of k-fold cross validation. index must be in 0~9""")
 
-tf.flags.DEFINE_bool('dice', False, """whether to use dice loss""")
+tf.flags.DEFINE_bool('dice', True, """whether to use dice loss""")
 
 FLAGS = tf.flags.FLAGS
 

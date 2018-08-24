@@ -45,7 +45,7 @@ tf.flags.DEFINE_bool('batch_norm', False, """whether to use batch-normalization"
 
 tf.flags.DEFINE_float('drop_out', 0.0, """whether to use drop-out""")
 
-tf.flags.DEFINE_bool('dice', False, """whether to use dice loss""")
+tf.flags.DEFINE_bool('dice', True, """whether to use dice loss""")
 
 
 """Augmentations"""
