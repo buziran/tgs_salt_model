@@ -5,7 +5,6 @@ import os
 
 import pandas as pd
 import numpy as np
-import tensorflow as tf
 from tensorflow.keras.models import load_model
 from skimage.transform import resize
 from tqdm import tnrange, tqdm_notebook
@@ -45,7 +44,7 @@ def main(argv=None):
     if FLAGS.debug:
         X_test = X_test[:10]
 
-    path_model = os.path.join(FLAGS.model, name_model)
+    path_model = os.path.join(FLAGS.model, NAME_MODEL)
     model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score}, compile=False)
     model.compile(optimizer="adam", loss='binary_crossentropy', metrics=[mean_iou, mean_score])
     preds_test = model.predict(X_test, verbose=1)
@@ -54,7 +53,7 @@ def main(argv=None):
     for i in tnrange(len(preds_test)):
         preds_test_upsampled.append(
             resize(np.squeeze(preds_test[i]),
-                   (orig_height, orig_width),
+                   (ORIG_HEIGHT, ORIG_WIDTH),
                    mode='constant', preserve_range=True))
 
     # 四捨五入している

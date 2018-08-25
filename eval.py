@@ -3,30 +3,15 @@
 
 import os
 
-import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras import backend as K
 import tensorflow.keras.losses
 
-from input import input_train, input_test, Dataset
+from input import Dataset
 from metrics import mean_iou, mean_score, bce_dice_loss
-from config import *
-
-tf.flags.DEFINE_string(
-    'input', "../input/train",
-    """path to train data""")
-
-tf.flags.DEFINE_string(
-    'model', './output/model',
-    """path to model directory""")
-
-tf.flags.DEFINE_integer(
-    'cv', 0,
-    """index of k-fold cross validation. index must be in 0~9""")
-
-tf.flags.DEFINE_bool('dice', True, """whether to use dice loss""")
+from constant import *
+import eval_config
 
 FLAGS = tf.flags.FLAGS
 
@@ -35,7 +20,7 @@ tensorflow.keras.losses.bce_dice_loss = bce_dice_loss
 
 def eval(dataset):
 
-    path_model = os.path.join(FLAGS.model, name_model)
+    path_model = os.path.join(FLAGS.model, NAME_MODEL)
 
     config = tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(

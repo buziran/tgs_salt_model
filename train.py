@@ -1,74 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+
 import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, LearningRateScheduler
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
 import tensorflow.keras.backend as K
 
 from model import build_model
 from input import Dataset
-from config import *
+from constant import *
 from util import StepDecay, MyTensorBoard
-
-tf.flags.DEFINE_string(
-    'input', "../input/train", """path to train data""")
-
-tf.flags.DEFINE_string(
-    'model', './output/model', """path to model directory""")
-
-tf.flags.DEFINE_string(
-    'log', './output/log', """path to log directory""")
-
-tf.flags.DEFINE_integer(
-    'epochs', 300, """path to log directory""")
-
-tf.flags.DEFINE_integer(
-    'batch_size', 32, """batch size""")
-
-tf.flags.DEFINE_integer(
-    'cv', 0, help="""index of k-fold cross validation. index must be in 0~9""")
-
-tf.flags.DEFINE_bool(
-    'early_stopping', False, help="""whether to apply early-stopping""")
-
-tf.flags.DEFINE_float(
-    'lr', 0.001, help="""initial value of learning rate""")
-
-tf.flags.DEFINE_float(
-    'lr_decay', 1.0, help="""decay factor for learning rate""")
-
-tf.flags.DEFINE_integer(
-    'epochs_decay', 10, help="""decay epoch of learning rate""")
-
-"""Model"""
-tf.flags.DEFINE_bool('batch_norm', False, """whether to use batch-normalization""")
-
-tf.flags.DEFINE_float('drop_out', 0.0, """whether to use drop-out""")
-
-tf.flags.DEFINE_bool('dice', True, """whether to use dice loss""")
-
-
-"""Augmentations"""
-tf.flags.DEFINE_bool(
-    'legacy', False, """whether to use legacy code""")
-
-tf.flags.DEFINE_bool(
-    'horizontal_flip', True, """whether to apply horizontal flip""")
-
-tf.flags.DEFINE_bool(
-    'vertical_flip', True, """whether to apply vertical flip""")
-
-tf.flags.DEFINE_integer(
-    'rotation_range', 30, """random rotation range""")
-
-tf.flags.DEFINE_float(
-    'zoom_range', 0.2, """random zoom range""")
-
-tf.flags.DEFINE_float(
-    'shift_range', 0.0, """random shift range""")
-
-tf.flags.DEFINE_enum(
-    'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
+import train_config
 
 FLAGS = tf.flags.FLAGS
 
@@ -90,11 +32,11 @@ def train(dataset):
             per_process_gpu_memory_fraction=0.9, allow_growth=True)))
     K.set_session(sess)
     with tf.device('/gpu:0'):
-        model = build_model(im_height, im_width, im_chan, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice)
+        model = build_model(IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice)
 
     print(model.summary())
 
-    path_model = os.path.join(FLAGS.model, name_model)
+    path_model = os.path.join(FLAGS.model, NAME_MODEL)
 
     checkpointer = ModelCheckpoint(path_model, monitor='val_mean_score', verbose=1, save_best_only=True, mode='max')
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)

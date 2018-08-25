@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+
+ORIG_HEIGHT = 101
+ORIG_WIDTH = 101
+IM_HEIGHT = 128
+IM_WIDTH = 128
+IM_CHAN = 1
+NAME_MODEL = 'model-tgs-salt-1.h5'
+N_SPLITS = 10
+BATCH_SIZE = 8
+INPUT_WORKERS = 4
+

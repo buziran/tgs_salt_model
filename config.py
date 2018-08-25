@@ -1,10 +1,13 @@
-orig_height = 101
-orig_width = 101
-im_height = 128
-im_width = 128
-im_chan = 1
-name_model = 'model-tgs-salt-1.h5'
-N_SPLITS = 10
-BATCH_SIZE = 8
-INPUT_WORKERS = 4
+import tensorflow as tf
+
+tf.flags.DEFINE_string(
+    'input', "../input/train", """path to train data""")
+
+tf.flags.DEFINE_string(
+    'model', './output/model', """path to model directory""")
+
+tf.flags.DEFINE_integer(
+    'cv', 0, help="""index of k-fold cross validation. index must be in 0~9""")
+
+tf.flags.DEFINE_bool('dice', True, """whether to use dice loss""")
 

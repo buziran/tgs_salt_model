@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import shlex
-import shutil
 import subprocess
-
 import datetime
 
-import os
-
 from gcp.upload import result_upload
-
-import sys
 from git import Repo
 from absl import app, flags
 

@@ -7,15 +7,15 @@ from tqdm import tqdm_notebook
 from skimage.transform import resize
 from tensorflow.keras.preprocessing.image import load_img, img_to_array, ImageDataGenerator
 
-from config import *
+from constant import *
 
 
 def input_train(path_train):
     train_ids = next(os.walk(os.path.join(path_train, "images")))[2]
 
     # Get and resize train images and masks
-    X_train = np.zeros((len(train_ids), im_height, im_width, im_chan), dtype=np.uint8)
-    Y_train = np.zeros((len(train_ids), im_height, im_width, 1), dtype=np.bool)
+    X_train = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)
+    Y_train = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, 1), dtype=np.bool)
     print('Getting and resizing train images and masks ... ')
     sys.stdout.flush()
     for n, id_ in tqdm_notebook(enumerate(train_ids), total=len(train_ids)):
@@ -41,8 +41,8 @@ class Dataset(object):
         train_ids = next(os.walk(os.path.join(self.path_train, "images")))[2]
 
         # Get and resize train images and masks
-        X_samples = np.zeros((len(train_ids), im_height, im_width, im_chan), dtype=np.uint8)
-        Y_samples = np.zeros((len(train_ids), im_height, im_width, 1), dtype=np.bool)
+        X_samples = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)
+        Y_samples = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, 1), dtype=np.bool)
         print('Getting and resizing train images and masks ... ')
         sys.stdout.flush()
         for n, id_ in tqdm_notebook(enumerate(train_ids), total=len(train_ids)):
@@ -106,7 +106,7 @@ class Dataset(object):
 def input_test(path_test):
     test_ids = next(os.walk(os.path.join(path_test, "images")))[2]
 
-    X_test = np.zeros((len(test_ids), im_height, im_width, im_chan), dtype=np.uint8)
+    X_test = np.zeros((len(test_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)
     print('Getting and resizing test images ... ')
     sys.stdout.flush()
     for n, id_ in tqdm_notebook(enumerate(test_ids), total=len(test_ids)):
