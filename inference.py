@@ -6,13 +6,14 @@ import os
 import pandas as pd
 import numpy as np
 from tensorflow.keras.models import load_model
+import tensorflow as tf
 from skimage.transform import resize
 from tqdm import tnrange, tqdm_notebook
 
 from util import RLenc
 from input import input_test
 from metrics import mean_iou, mean_score, bce_dice_loss
-from config import *
+from constant import *
 
 tf.flags.DEFINE_string(
     'input', '../input/test',

@@ -89,7 +89,7 @@ class Dataset(object):
         self.Y_valid = self.Y_samples[valid_index]
         self.id_valid = self.id_samples[valid_index]
 
-    def create_generator(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, shuffle=True, with_id=False):
+    def create_generator_cv(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, shuffle=True, with_id=False):
         self.kfold_split(n_splits, idx_kfold)
         data_gen_args = augment_dict
         print("data_gen_args is {}".format(data_gen_args))
@@ -112,6 +112,19 @@ class Dataset(object):
 
         return train_generator, valid_generator
 
+    def create_generator(self, batch_size=8, augment_dict={}, shuffle=False, with_id=False):
+        data_gen_args = augment_dict
+        print("data_gen_args is {}".format(data_gen_args))
+        seed = 1
+
+        X_sample_datagen = ImageDataGenerator(**data_gen_args)
+        Y_sample_datagen = ImageDataGenerator(**data_gen_args)
+        id_sample = self.id_sample if with_id else None
+        X_sample_generator = X_sample_datagen.flow(self.X_sample, y=id_sample, seed=seed, batch_size=batch_size, shuffle=shuffle)
+        Y_sample_generator = Y_sample_datagen.flow(self.Y_sample, seed=seed, batch_size=batch_size, shuffle=shuffle)
+        sample_generator = zip(X_sample_generator, Y_sample_generator)
+
+        return sample_generator
 
 def input_test(path_test):
     test_ids = next(os.walk(os.path.join(path_test, "images")))[2]

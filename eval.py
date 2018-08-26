@@ -26,7 +26,7 @@ def eval(dataset):
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
             per_process_gpu_memory_fraction=0.9, allow_growth=True))
 
-    train_generator, valid_generator = dataset.create_generator(
+    train_generator, valid_generator = dataset.create_generator_cv(
         n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=BATCH_SIZE, augment_dict={}, shuffle=False)
 
     with tf.Graph().as_default():

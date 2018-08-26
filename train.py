@@ -53,7 +53,7 @@ def train(dataset):
             batch_size=FLAGS.batch_size, epochs=FLAGS.epochs,
             callbacks=callbacks)
     else:
-        train_generator, valid_generator = dataset.create_generator(
+        train_generator, valid_generator = dataset.create_generator_cv(
             n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
         steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
         validation_steps = int(dataset.num_valid / FLAGS.batch_size)
