@@ -10,28 +10,6 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array, ImageDa
 from constant import *
 
 
-def input_train(path_train):
-    train_ids = next(os.walk(os.path.join(path_train, "images")))[2]
-
-    # Get and resize train images and masks
-    X_train = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)
-    Y_train = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, 1), dtype=np.bool)
-    print('Getting and resizing train images and masks ... ')
-    sys.stdout.flush()
-    for n, id_ in tqdm_notebook(enumerate(train_ids), total=len(train_ids)):
-        path = path_train
-        img = load_img(path + '/images/' + id_)
-        x = img_to_array(img)[:, :, 1]
-        x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
-        X_train[n] = x
-        mask = img_to_array(load_img(path + '/masks/' + id_))[:, :, 1]
-        Y_train[n] = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)
-
-    print('Done!')
-
-    return X_train, Y_train
-
-
 class Dataset(object):
     def __init__(self, path_train):
         self.path_train = path_train
