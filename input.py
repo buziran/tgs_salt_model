@@ -17,6 +17,7 @@ class Dataset(object):
 
     def load(self):
         train_ids = next(os.walk(os.path.join(self.path_train, "images")))[2]
+        train_ids = sorted(train_ids)
 
         # Get and resize train images and masks
         X_samples = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)

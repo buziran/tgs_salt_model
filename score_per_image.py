@@ -59,6 +59,7 @@ def mean_score(y_true, y_pred):
 
 def list_image(path_input):
     sample_ids = next(os.walk(os.path.join(path_input, "masks")))[2]
+    sample_ids = sorted(sample_ids)
     return sample_ids
 
 
