@@ -56,6 +56,9 @@ class Dataset(object):
 
         print('Done!')
 
+        id_samples = np.array(train_ids)
+
+        self.id_samples = id_samples
         self.X_samples = X_samples
         self.Y_samples = Y_samples
 
@@ -80,23 +83,30 @@ class Dataset(object):
 
         self.X_train = self.X_samples[train_index]
         self.Y_train = self.Y_samples[train_index]
+        self.id_train = self.id_samples[train_index]
+
         self.X_valid = self.X_samples[valid_index]
         self.Y_valid = self.Y_samples[valid_index]
+        self.id_valid = self.id_samples[valid_index]
 
-    def create_generator(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, shuffle=True):
+    def create_generator(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, shuffle=True, with_id=False):
         self.kfold_split(n_splits, idx_kfold)
         data_gen_args = augment_dict
         print("data_gen_args is {}".format(data_gen_args))
         seed = 1
+
+
         X_train_datagen = ImageDataGenerator(**data_gen_args)
         Y_train_datagen = ImageDataGenerator(**data_gen_args)
-        X_train_generator = X_train_datagen.flow(self.X_train, seed=seed, batch_size=batch_size, shuffle=shuffle)
+        id_train = self.id_train if with_id else None
+        X_train_generator = X_train_datagen.flow(self.X_train, y=id_train, seed=seed, batch_size=batch_size, shuffle=shuffle)
         Y_train_generator = Y_train_datagen.flow(self.Y_train, seed=seed, batch_size=batch_size, shuffle=shuffle)
         train_generator = zip(X_train_generator, Y_train_generator)
 
         X_valid_datagen = ImageDataGenerator()
         Y_valid_datagen = ImageDataGenerator()
-        X_valid_generator = X_valid_datagen.flow(self.X_valid, batch_size=batch_size, shuffle=False)
+        id_valid = self.id_valid if with_id else None
+        X_valid_generator = X_valid_datagen.flow(self.X_valid, y=id_valid, batch_size=batch_size, shuffle=False)
         Y_valid_generator = Y_valid_datagen.flow(self.Y_valid, batch_size=batch_size, shuffle=False)
         valid_generator = zip(X_valid_generator, Y_valid_generator)
 
