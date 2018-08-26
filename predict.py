@@ -19,14 +19,14 @@ tf.flags.DEFINE_string(
     """path to test data""")
 
 tf.flags.DEFINE_string(
-    'model', 'output/model',
+    'model', '../output/model',
     """path to model directory""")
 
 tf.flags.DEFINE_integer(
     'batch_size', 32, """batch size""")
 
 tf.flags.DEFINE_string(
-    'prediction', 'output/prediction/train',
+    'prediction', '../output/prediction/train',
     """path to prediction directory""")
 
 FLAGS = tf.flags.FLAGS

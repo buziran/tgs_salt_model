@@ -4,7 +4,7 @@ import tensorflow as tf
 import config
 
 tf.flags.DEFINE_string(
-    'log', './output/log', """path to log directory""")
+    'log', '../output/log', """path to log directory""")
 
 tf.flags.DEFINE_integer(
     'epochs', 300, """path to log directory""")

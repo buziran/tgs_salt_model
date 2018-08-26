@@ -20,11 +20,11 @@ tf.flags.DEFINE_string(
     """path to test data""")
 
 tf.flags.DEFINE_string(
-    'model', 'output/model',
+    'model', '../output/model',
     """path to model directory""")
 
 tf.flags.DEFINE_string(
-    'submission', 'output/submission.csv',
+    'submission', '../output/submission.csv',
     """path to submission file""")
 
 tf.flags.DEFINE_bool(
