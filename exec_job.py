@@ -51,7 +51,7 @@ def main(argv):
         subprocess.run(shlex.split(FLAGS.preprocess), check=False)
 
     if FLAGS.train != "":
-        proc_tb = subprocess.Popen(["tensorboard", "--logdir", ".", "--port", "6066"])
+        proc_tb = subprocess.Popen(["tensorboard", "--logdir", "../output", "--port", "6666"])
         subprocess.run(shlex.split(FLAGS.train), check=True)
         proc_tb.kill()
 
