@@ -119,9 +119,9 @@ class Dataset(object):
 
         X_sample_datagen = ImageDataGenerator(**data_gen_args)
         Y_sample_datagen = ImageDataGenerator(**data_gen_args)
-        id_sample = self.id_sample if with_id else None
-        X_sample_generator = X_sample_datagen.flow(self.X_sample, y=id_sample, seed=seed, batch_size=batch_size, shuffle=shuffle)
-        Y_sample_generator = Y_sample_datagen.flow(self.Y_sample, seed=seed, batch_size=batch_size, shuffle=shuffle)
+        id_samples = self.id_samples if with_id else None
+        X_sample_generator = X_sample_datagen.flow(self.X_samples, y=id_samples, seed=seed, batch_size=batch_size, shuffle=shuffle)
+        Y_sample_generator = Y_sample_datagen.flow(self.Y_samples, seed=seed, batch_size=batch_size, shuffle=shuffle)
         sample_generator = zip(X_sample_generator, Y_sample_generator)
 
         return sample_generator
