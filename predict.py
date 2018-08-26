@@ -9,6 +9,7 @@ from tensorflow.keras.models import load_model
 import tensorflow.keras.backend as K
 from tqdm import tqdm
 from scipy.misc import imsave
+from skimage.transform import resize
 
 from input import Dataset
 from metrics import mean_iou, mean_score
@@ -38,6 +39,7 @@ def save_prediction(ys_pred, ids, path_out):
     ys_pred = np.squeeze(ys_pred.astype(np.uint8), axis=3)
     ids = ids.astype(str)
     for y_pred, id in zip(ys_pred, ids):
+        y_pred = resize(y_pred, (ORIG_HEIGHT, ORIG_WIDTH))
         filename = os.path.join(path_out, id)
         imsave(filename, y_pred)
 
