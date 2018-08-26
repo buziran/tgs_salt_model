@@ -25,7 +25,7 @@ tf.flags.DEFINE_integer(
     'epochs_decay', 10, help="""decay epoch of learning rate""")
 
 """Model"""
-tf.flags.DEFINE_bool('batch_norm', False, """whether to use batch-normalization""")
+tf.flags.DEFINE_bool('batch_norm', True, """whether to use batch-normalization""")
 
 tf.flags.DEFINE_float('drop_out', 0.0, """whether to use drop-out""")
 
