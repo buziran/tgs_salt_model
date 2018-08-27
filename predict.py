@@ -50,9 +50,9 @@ def main(argv=None):
         tf.gfile.DeleteRecursively(FLAGS.prediction)
     tf.gfile.MakeDirs(FLAGS.prediction)
 
-    dataset = Dataset(FLAGS.input)
+    dataset = Dataset(FLAGS.input, is_test=True)
 
-    sample_generator = dataset.create_generator(batch_size=FLAGS.batch_size, augment_dict={}, shuffle=False, with_id=True)
+    sample_generator = dataset.create_test_generator(batch_size=FLAGS.batch_size, shuffle=False, with_id=True)
 
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
@@ -63,10 +63,10 @@ def main(argv=None):
     model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score}, compile=False)
     model.compile(optimizer="adam", loss='binary_crossentropy', metrics=[mean_iou, mean_score])
 
-    for id_batch, ((xs, ids), ys_true) in enumerate(
-            tqdm(sample_generator, total=dataset.num_samples // FLAGS.batch_size)):
+    num_batch = np.ceil(dataset.num_samples / FLAGS.batch_size)
+    for id_batch, (xs, ids) in enumerate(tqdm(sample_generator, total=num_batch)):
 
-        if id_batch == dataset.num_samples // FLAGS.batch_size:
+        if id_batch == num_batch:
             break
         ys_pred = model.predict_on_batch(xs)
         save_prediction(ys_pred, ids, FLAGS.prediction)

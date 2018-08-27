@@ -84,7 +84,7 @@ def main(argv=None):
 
     dataset = Dataset(FLAGS.input)
 
-    train_generator, valid_generator = dataset.create_generator_cv(
+    train_generator, valid_generator = dataset.create_train_generator(
         n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict={}, shuffle=False, with_id=True)
 
     sess = tf.Session(config=tf.ConfigProto(

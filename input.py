@@ -11,12 +11,17 @@ from constant import *
 
 
 class Dataset(object):
-    def __init__(self, path_train):
-        self.path_train = path_train
-        self.load()
+    def __init__(self, path_input, is_test=False):
+        self.path_input = path_input
+        self.is_test = is_test
+        if not self.is_test:
+            self.load_train()
+        else:
+            self.load_test()
 
-    def load(self):
-        train_ids = next(os.walk(os.path.join(self.path_train, "images")))[2]
+
+    def load_train(self):
+        train_ids = next(os.walk(os.path.join(self.path_input, "images")))[2]
         train_ids = sorted(train_ids)
 
         # Get and resize train images and masks
@@ -25,7 +30,7 @@ class Dataset(object):
         print('Getting and resizing train images and masks ... ')
         sys.stdout.flush()
         for n, id_ in tqdm_notebook(enumerate(train_ids), total=len(train_ids)):
-            path = self.path_train
+            path = self.path_input
             img = load_img(path + '/images/' + id_)
             x = img_to_array(img)[:, :, 1]
             x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
@@ -40,6 +45,28 @@ class Dataset(object):
         self.id_samples = id_samples
         self.X_samples = X_samples
         self.Y_samples = Y_samples
+
+    def load_test(self):
+        test_ids = next(os.walk(os.path.join(self.path_input, "images")))[2]
+        test_ids = sorted(test_ids)
+
+        # Get and resize train images and masks
+        X_samples = np.zeros((len(test_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)
+        print('Getting and resizing test images ... ')
+        sys.stdout.flush()
+        for n, id_ in tqdm_notebook(enumerate(test_ids), total=len(test_ids)):
+            path = self.path_input
+            img = load_img(path + '/images/' + id_)
+            x = img_to_array(img)[:, :, 1]
+            x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
+            X_samples[n] = x
+
+        print('Done!')
+
+        id_samples = np.array(test_ids)
+
+        self.id_samples = id_samples
+        self.X_samples = X_samples
 
     @property
     def num_samples(self):
@@ -68,7 +95,7 @@ class Dataset(object):
         self.Y_valid = self.Y_samples[valid_index]
         self.id_valid = self.id_samples[valid_index]
 
-    def create_generator_cv(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, shuffle=True, with_id=False):
+    def create_train_generator(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, shuffle=True, with_id=False):
         self.kfold_split(n_splits, idx_kfold)
         data_gen_args = augment_dict
         print("data_gen_args is {}".format(data_gen_args))
@@ -91,19 +118,13 @@ class Dataset(object):
 
         return train_generator, valid_generator
 
-    def create_generator(self, batch_size=8, augment_dict={}, shuffle=False, with_id=False):
-        data_gen_args = augment_dict
-        print("data_gen_args is {}".format(data_gen_args))
+    def create_test_generator(self, batch_size=8, shuffle=False, with_id=False):
         seed = 1
-
-        X_sample_datagen = ImageDataGenerator(**data_gen_args)
-        Y_sample_datagen = ImageDataGenerator(**data_gen_args)
+        X_sample_datagen = ImageDataGenerator()
         id_samples = self.id_samples if with_id else None
         X_sample_generator = X_sample_datagen.flow(self.X_samples, y=id_samples, seed=seed, batch_size=batch_size, shuffle=shuffle)
-        Y_sample_generator = Y_sample_datagen.flow(self.Y_samples, seed=seed, batch_size=batch_size, shuffle=shuffle)
-        sample_generator = zip(X_sample_generator, Y_sample_generator)
+        return X_sample_generator
 
-        return sample_generator
 
 def input_test(path_test):
     test_ids = next(os.walk(os.path.join(path_test, "images")))[2]
