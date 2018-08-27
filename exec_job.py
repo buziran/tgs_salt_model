@@ -19,7 +19,7 @@ flags.DEFINE_bool("force", False, """Ignore un-committed files""", short_name="f
 
 FLAGS = flags.FLAGS
 
-OUTPUT_PATH = "./output"
+OUTPUT_PATH = "../output"
 
 
 def check_commit():
@@ -51,7 +51,7 @@ def main(argv):
         subprocess.run(shlex.split(FLAGS.preprocess), check=False)
 
     if FLAGS.train != "":
-        proc_tb = subprocess.Popen(["tensorboard", "--logdir", "../output", "--port", "6666"])
+        proc_tb = subprocess.Popen(["tensorboard", "--logdir", "../output", "--port", "6699"])
         subprocess.run(shlex.split(FLAGS.train), check=True)
         proc_tb.kill()
 
@@ -75,7 +75,7 @@ def main(argv):
 
 
     if not FLAGS["dry-run"].value:
-        result_upload(FLAGS.name, datetime_str, OUTPUT_PATH, summary)
+        result_upload(FLAGS.name, OUTPUT_PATH, summary)
 
 
 if __name__ == '__main__':

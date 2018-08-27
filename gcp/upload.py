@@ -22,7 +22,9 @@ flags.DEFINE_string(
     'config', os.path.join(os.path.dirname(__file__), 'config.json'), 'path to GCP token file.')
 
 
-def result_upload(name, datetime_str, path, summary):
+def result_upload(name, path, summary, datetime_str=None):
+    if datetime_str is None:
+        datetime_str = str(datetime.datetime.now())
     service_manager = ServiceManager(FLAGS.credentials)
     config = get_config()
     service = service_manager.get_drive_service()
