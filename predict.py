@@ -30,10 +30,14 @@ tf.flags.DEFINE_string(
     'prediction', '../output/prediction/train',
     """path to prediction directory""")
 
+tf.flags.DEFINE_bool(
+    'npz', False,
+    """whether to save as npz""")
+
 FLAGS = tf.flags.FLAGS
 
 
-def save_prediction(ys_pred, ids, path_out):
+def save_png(ys_pred, ids, path_out):
     """Save confidence image as uint.8"""
     ys_pred = np.clip(ys_pred * 255, 0, 255)
     ys_pred = np.squeeze(ys_pred.astype(np.uint8), axis=3)
@@ -42,6 +46,15 @@ def save_prediction(ys_pred, ids, path_out):
         y_pred = resize(y_pred, (ORIG_HEIGHT, ORIG_WIDTH))
         filename = os.path.join(path_out, id)
         imsave(filename, y_pred)
+
+
+def save_npz(ys_pred, ids, path_out):
+    ids = [os.path.splitext(id)[0] + '.npz' for id in ids]
+    ys_pred = np.squeeze(ys_pred, axis=3)
+    for y_pred, id in zip(ys_pred, ids):
+        y_pred = resize(y_pred, (ORIG_HEIGHT, ORIG_WIDTH))
+        filename = os.path.join(path_out, id)
+        np.savez(filename, y_pred)
 
 
 def main(argv=None):
@@ -69,7 +82,10 @@ def main(argv=None):
         if id_batch == num_batch:
             break
         ys_pred = model.predict_on_batch(xs)
-        save_prediction(ys_pred, ids, FLAGS.prediction)
+        if not FLAGS.npz:
+            save_png(ys_pred, ids, FLAGS.prediction)
+        else:
+            save_npz(ys_pred, ids, FLAGS.prediction)
 
 
 if __name__ == '__main__':

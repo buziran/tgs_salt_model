@@ -21,13 +21,14 @@ flags.DEFINE_string('submission', '../output/submission.csv', """path to submiss
 flags.DEFINE_string('model', '../output/model', """path to model root directory""")
 flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
 flags.DEFINE_enum('type', 'min', enum_values=['mean', 'max', 'min', 'median'], help="""ensemble type""")
+flags.DEFINE_bool('npz', False, """whether to use npz format""")
 
 
 FLAGS = flags.FLAGS
 
 
 def list_model(model_root):
-    model_dirs = glob.glob(os.path.join(model_root, "**", 'model'))
+    model_dirs = glob.glob(os.path.join(model_root, "**", 'model'), recursive=True)
     model_dirs = filter(lambda x: os.path.isdir(x), model_dirs)
     return model_dirs
 
@@ -47,10 +48,23 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
             pass
 
 
+def load_png(path_pred):
+    im = np.asarray(Image.open(path_pred))
+    im = im.astype(np.float) / 255.
+    return im
+
+
+def load_npz(path_pred):
+    npzfile = np.load(path_pred)
+    return npzfile['arr_0']
+
+
 def main(argv):
 
     model_dirs = list_model(FLAGS.model)
     pred_arg_template = ["python", "predict.py", "--input", FLAGS.input]
+    if FLAGS.npz:
+        pred_arg_template += ["--npz"]
 
     # Predict with each model
     with TemporaryDirectory(prefix="pred-", delete=FLAGS.delete) as tdir:
@@ -64,30 +78,35 @@ def main(argv):
             path_preds.append(path_pred)
 
         pred_dict = {}
-        image_names = os.listdir(path_preds[0])
+        pred_files = os.listdir(path_preds[0])
 
         path_ensembled = os.path.join(tdir, "ensemble-preds")
         os.makedirs(path_ensembled)
-        for image_name in tqdm(image_names):
-            images = []
+        for pred_file in tqdm(pred_files):
+            preds = []
             for d in path_preds:
-                im = np.asarray(Image.open(os.path.join(d, image_name)))
-                images.append(im)
-            images = np.stack(images, axis=2).astype(np.float) / 255.
-            if FLAGS.type == 'mean':
-                ensembled = np.mean(images, axis=2)
-            elif FLAGS.type == 'max':
-                ensembled = np.max(images, axis=2)
-            elif FLAGS.type == 'min':
-                ensembled = np.min(images, axis=2)
-            elif FLAGS.type == 'median':
-                ensembled = np.median(images, axis=2)
+                path_pred = os.path.join(d, pred_file)
+                if not FLAGS.npz:
+                    pred = load_png(path_pred)
+                else:
+                    pred = load_npz(path_pred)
 
-            pred_dict.update({image_name[:-4]: RLenc(np.round(ensembled))})
+                preds.append(pred)
+            preds = np.stack(preds, axis=2).astype(np.float)
+            if FLAGS.type == 'mean':
+                ensembled = np.mean(preds, axis=2)
+            elif FLAGS.type == 'max':
+                ensembled = np.max(preds, axis=2)
+            elif FLAGS.type == 'min':
+                ensembled = np.min(preds, axis=2)
+            elif FLAGS.type == 'median':
+                ensembled = np.median(preds, axis=2)
+
+            pred_dict.update({pred_file[:-4]: RLenc(np.round(ensembled))})
 
             if not FLAGS.delete:
                 y_pred = np.clip(ensembled * 255, 0, 255).astype(np.uint8)
-                filename = os.path.join(path_ensembled, image_name)
+                filename = os.path.join(path_ensembled, pred_file)
                 imsave(filename, y_pred)
 
 
