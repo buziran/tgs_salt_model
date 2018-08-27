@@ -10,7 +10,7 @@ from gcp.upload import result_upload
 from git import Repo
 from absl import app, flags
 
-flags.DEFINE_string("preprocess", "rm -rf ./output", """preprocess command.""")
+flags.DEFINE_string("preprocess", "rm -rf ../output", """preprocess command.""")
 flags.DEFINE_string("train", "", """train command.""")
 flags.DEFINE_string("eval", "", """evaluation command.""")
 flags.DEFINE_string("name", "no-name", """name of job""")
