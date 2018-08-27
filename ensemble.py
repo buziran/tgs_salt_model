@@ -20,7 +20,7 @@ flags.DEFINE_string('input', '../input/test', """path to test data""")
 flags.DEFINE_string('submission', '../output/submission.csv', """path to submission file""")
 flags.DEFINE_string('model', '../output/model', """path to model root directory""")
 flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
-flags.DEFINE_enum('type', 'mean', enum_values=['mean', 'max', 'min', 'median'], help="""ensemble type""")
+flags.DEFINE_enum('type', 'min', enum_values=['mean', 'max', 'min', 'median'], help="""ensemble type""")
 
 
 FLAGS = flags.FLAGS
@@ -86,7 +86,7 @@ def main(argv):
             pred_dict.update({image_name[:-4]: RLenc(np.round(ensembled))})
 
             if not FLAGS.delete:
-                y_pred = np.clip(ensembled * 255, 0, 255)
+                y_pred = np.clip(ensembled * 255, 0, 255).astype(np.uint8)
                 filename = os.path.join(path_ensembled, image_name)
                 imsave(filename, y_pred)
 
