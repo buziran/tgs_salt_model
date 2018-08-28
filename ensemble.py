@@ -21,7 +21,6 @@ flags.DEFINE_string('submission', '../output/submission.csv', """path to submiss
 flags.DEFINE_string('model', '../output/model', """path to model root directory""")
 flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
 flags.DEFINE_enum('type', 'min', enum_values=['mean', 'max', 'min', 'median'], help="""ensemble type""")
-flags.DEFINE_bool('npz', False, """whether to use npz format""")
 
 
 FLAGS = flags.FLAGS
@@ -48,12 +47,6 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
             pass
 
 
-def load_png(path_pred):
-    im = np.asarray(Image.open(path_pred))
-    im = im.astype(np.float) / 255.
-    return im
-
-
 def load_npz(path_pred):
     npzfile = np.load(path_pred)
     return npzfile['arr_0']
@@ -62,9 +55,7 @@ def load_npz(path_pred):
 def main(argv):
 
     model_dirs = list_model(FLAGS.model)
-    pred_arg_template = ["python", "predict.py", "--input", FLAGS.input]
-    if FLAGS.npz:
-        pred_arg_template += ["--npz"]
+    pred_arg_template = ["python", "predict.py", "--input", FLAGS.input, '--npz']
 
     # Predict with each model
     with TemporaryDirectory(prefix="pred-", delete=FLAGS.delete) as tdir:
@@ -78,7 +69,7 @@ def main(argv):
             path_preds.append(path_pred)
 
         pred_dict = {}
-        pred_files = os.listdir(path_preds[0])
+        pred_files = filter(lambda x: x.endswith('.npz'), os.listdir(path_preds[0]))
 
         path_ensembled = os.path.join(tdir, "ensemble-preds")
         os.makedirs(path_ensembled)
@@ -86,11 +77,7 @@ def main(argv):
             preds = []
             for d in path_preds:
                 path_pred = os.path.join(d, pred_file)
-                if not FLAGS.npz:
-                    pred = load_png(path_pred)
-                else:
-                    pred = load_npz(path_pred)
-
+                pred = load_npz(path_pred)
                 preds.append(pred)
             preds = np.stack(preds, axis=2).astype(np.float)
             if FLAGS.type == 'mean':
@@ -106,9 +93,8 @@ def main(argv):
 
             if not FLAGS.delete:
                 y_pred = np.clip(ensembled * 255, 0, 255).astype(np.uint8)
-                filename = os.path.join(path_ensembled, pred_file)
+                filename = os.path.join(path_ensembled, os.path.splitext(pred_file)[0] + '.png')
                 imsave(filename, y_pred)
-
 
         sub = pd.DataFrame.from_dict(pred_dict, orient='index')
         sub.index.names = ['id']

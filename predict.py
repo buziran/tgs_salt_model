@@ -31,7 +31,7 @@ tf.flags.DEFINE_string(
     """path to prediction directory""")
 
 tf.flags.DEFINE_bool(
-    'npz', False,
+    'npz', True,
     """whether to save as npz""")
 
 FLAGS = tf.flags.FLAGS
@@ -82,9 +82,8 @@ def main(argv=None):
         if id_batch == num_batch:
             break
         ys_pred = model.predict_on_batch(xs)
-        if not FLAGS.npz:
-            save_png(ys_pred, ids, FLAGS.prediction)
-        else:
+        save_png(ys_pred, ids, FLAGS.prediction)
+        if FLAGS.npz:
             save_npz(ys_pred, ids, FLAGS.prediction)
 
 
