@@ -72,7 +72,7 @@ def main(argv):
         pred_files = filter(lambda x: x.endswith('.npz'), os.listdir(path_preds[0]))
 
         path_ensembled = os.path.join(tdir, "ensemble-preds")
-        os.makedirs(path_ensembled)
+        os.makedirs(path_ensembled, exist_ok=True)
         for pred_file in tqdm(pred_files):
             preds = []
             for d in path_preds:
@@ -95,6 +95,8 @@ def main(argv):
                 y_pred = np.clip(ensembled * 255, 0, 255).astype(np.uint8)
                 filename = os.path.join(path_ensembled, os.path.splitext(pred_file)[0] + '.png')
                 imsave(filename, y_pred)
+
+        os.makedirs(os.path.dirname(FLAGS.submission), exist_ok=True)
 
         sub = pd.DataFrame.from_dict(pred_dict, orient='index')
         sub.index.names = ['id']
