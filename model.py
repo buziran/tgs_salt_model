@@ -8,7 +8,7 @@ from metrics import mean_iou, mean_score, bce_dice_loss
 
 def build_model_ref(
         height, width, channels, optimizer='adam', dice=False, out_ch=1, start_ch=16, depth=5, inc_rate=2,
-        activation='relu', dropout=0.5, batchnorm=True, maxpool=True, upconv=True, residual=False):
+        activation='relu', drop_out=0.5, batch_norm=True, maxpool=True, upconv=True, residual=False):
     """Copy from https://www.kaggle.com/dingli/seismic-data-analysis-with-u-net"""
 
     def conv_block(m, dim, acti, bn, res, do=0):
