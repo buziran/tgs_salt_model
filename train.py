@@ -10,7 +10,7 @@ from model import build_model
 from input import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard
-import train_config
+import config_train
 
 FLAGS = tf.flags.FLAGS
 

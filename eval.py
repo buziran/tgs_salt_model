@@ -11,7 +11,7 @@ import tensorflow.keras.losses
 from input import Dataset
 from metrics import mean_iou, mean_score, bce_dice_loss
 from constant import *
-import eval_config
+import config_eval
 
 FLAGS = tf.flags.FLAGS
 

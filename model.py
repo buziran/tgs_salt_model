@@ -45,7 +45,7 @@ def build_model_ref(
         return Model(inputs=inputs, outputs=outputs)
 
     img_shape = [height, width, channels]
-    model = UNet(img_shape, out_ch, start_ch, depth, inc_rate, activation, dropout, batchnorm, maxpool, upconv, residual)
+    model = UNet(img_shape, out_ch, start_ch, depth, inc_rate, activation, drop_out, batch_norm, maxpool, upconv, residual)
     if dice:
         loss = bce_dice_loss
     else:
