@@ -6,6 +6,54 @@ from tensorflow.keras.models import Model
 
 from metrics import mean_iou, mean_score, bce_dice_loss
 
+def build_model_ref(
+        height, width, channels, optimizer='adam', dice=False, out_ch=1, start_ch=16, depth=5, inc_rate=2,
+        activation='relu', dropout=0.5, batchnorm=True, maxpool=True, upconv=True, residual=False):
+    """Copy from https://www.kaggle.com/dingli/seismic-data-analysis-with-u-net"""
+
+    def conv_block(m, dim, acti, bn, res, do=0):
+        n = Conv2D(dim, 3, activation=acti, padding='same')(m)
+        n = BatchNormalization()(n) if bn else n
+        n = Dropout(do)(n) if do else n
+        n = Conv2D(dim, 3, activation=acti, padding='same')(n)
+        n = BatchNormalization()(n) if bn else n
+        return Concatenate()([m, n]) if res else n
+
+    def level_block(tensor, dimension, depth, inc_rate, activation, dropout, bacthnorm, maxpool, upconv, residual):
+        if depth > 0:
+            n = conv_block(tensor, dimension, activation, bacthnorm, residual)
+            tensor = MaxPooling2D()(n) if maxpool else Conv2D(dimension, 3, strides=2, padding='same')(n)
+            tensor = level_block(
+                tensor, int(inc_rate * dimension),
+                depth - 1, inc_rate, activation, dropout, bacthnorm, maxpool, upconv, residual)
+            if upconv:
+                tensor = UpSampling2D()(tensor)
+                tensor = Conv2D(dimension, 2, activation=activation, padding='same')(tensor)
+            else:
+                tensor = Conv2DTranspose(dimension, 3, strides=2, activation=activation, padding='same')(tensor)
+            n = Concatenate()([n, tensor])
+            tensor = conv_block(n, dimension, activation, bacthnorm, residual)
+        else:
+            tensor = conv_block(tensor, dimension, activation, bacthnorm, residual, dropout)
+        return tensor
+
+    def UNet(img_shape, out_ch, start_ch, depth, inc_rate, activation, dropout, batchnorm, maxpool, upconv, residual):
+        inputs = Input(shape=img_shape)
+        outputs = level_block(
+            inputs, start_ch, depth, inc_rate, activation, dropout, batchnorm, maxpool, upconv, residual)
+        outputs = Conv2D(out_ch, 1, activation='sigmoid')(outputs)
+        return Model(inputs=inputs, outputs=outputs)
+
+    img_shape = [height, width, channels]
+    model = UNet(img_shape, out_ch, start_ch, depth, inc_rate, activation, dropout, batchnorm, maxpool, upconv, residual)
+    if dice:
+        loss = bce_dice_loss
+    else:
+        loss = 'binary_crossentropy'
+
+    model.compile(optimizer=optimizer, loss=loss, metrics=[mean_iou, mean_score])
+    return model
+
 
 def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimizer='adam', dice=False):
     inputs = Input((height, width, channels))
