@@ -27,7 +27,7 @@ tf.flags.DEFINE_integer(
     'batch_size', 32, """batch size""")
 
 tf.flags.DEFINE_string(
-    'prediction', '../output/prediction/train',
+    'prediction', '../output/prediction',
     """path to prediction directory""")
 
 tf.flags.DEFINE_bool(

@@ -69,7 +69,7 @@ def main(argv):
             path_preds.append(path_pred)
 
         pred_dict = {}
-        pred_files = filter(lambda x: x.endswith('.npz'), os.listdir(path_preds[0]))
+        pred_files = list(filter(lambda x: x.endswith('.npz'), os.listdir(path_preds[0])))
 
         path_ensembled = os.path.join(tdir, "ensemble-preds")
         os.makedirs(path_ensembled, exist_ok=True)

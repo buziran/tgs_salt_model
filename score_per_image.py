@@ -12,13 +12,14 @@ from tqdm import tqdm
 import pandas as pd
 
 from constant import *
+from metrics import mean_score_per_image
 
 flags.DEFINE_string(
     'input', '../input/train',
     """path to train mask data""")
 
 flags.DEFINE_string(
-    'prediction', '../output/prediction/train',
+    'prediction', '../output/prediction',
     """path to prediction directory""")
 
 flags.DEFINE_integer(
@@ -31,30 +32,6 @@ flags.DEFINE_string(
 FLAGS = flags.FLAGS
 
 N_SPLITS = 10
-
-
-def mean_score(y_true, y_pred):
-    """Calculate score per image"""
-    # GT, Predともに前景ゼロの場合はスコアを1とする
-    if np.any(y_true) == False and np.any(y_pred) == False:
-        return 1.
-
-    threasholds_iou = np.arange(0.5, 1.0, 0.05, dtype=float)
-    y_true = np.reshape(y_true, (-1))
-    y_pred = np.reshape(y_pred, (-1))
-    total_cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
-    sum_over_row = np.sum(total_cm, 0).astype(float)
-    sum_over_col = np.sum(total_cm, 1).astype(float)
-    cm_diag = np.diag(total_cm).astype(float)
-    denominator = sum_over_row + sum_over_col - cm_diag
-    denominator = np.where(np.greater(denominator, 0), denominator, np.ones_like(denominator))
-    # iou[0]: 背景のIoU
-    # iou[1]: 前景のIoU
-    iou = np.divide(cm_diag, denominator)
-    iou_fg = iou[1]
-    greater = np.greater(iou_fg, threasholds_iou)
-    score_per_image = np.mean(greater.astype(float))
-    return score_per_image
 
 
 def list_image(path_input):
@@ -75,7 +52,7 @@ def split_train_valid(sample_ids, n_splits, idx_kfold):
         if idx == idx_kfold:
             break
     train_ids = np.array(sample_ids)[train_index]
-    valid_ids = np.array(sample_ids)[train_index]
+    valid_ids = np.array(sample_ids)[valid_index]
     return train_ids, valid_ids
 
 
@@ -91,17 +68,17 @@ def main(argv):
 
     rows = []
 
-    for train_id in tqdm(train_ids):
-        y_true_path = os.path.join(FLAGS.input, "masks", train_id)
+    for valid_id in tqdm(valid_ids):
+        y_true_path = os.path.join(FLAGS.input, "masks", valid_id)
         y_true = np.array(Image.open(y_true_path)).astype(float)
         y_true = np.round(y_true / 65535.).astype(int)
-        y_pred_path = os.path.join(FLAGS.prediction, os.path.splitext(train_id)[0] + ".npz")
+        y_pred_path = os.path.join(FLAGS.prediction, os.path.splitext(valid_id)[0] + ".npz")
         y_pred = load_npz(y_pred_path)
         y_pred = np.round(y_pred).astype(int)
-        score = mean_score(y_true, y_pred)
+        score = mean_score_per_image(y_true, y_pred)
         coverage_true = np.sum(y_true) / float(ORIG_WIDTH * ORIG_HEIGHT)
         coverage_pred = np.sum(y_pred) / float(ORIG_WIDTH * ORIG_HEIGHT)
-        row = {"name": train_id, "score": score, "coverage_true": coverage_true, "coverage_pred": coverage_pred}
+        row = {"name": valid_id, "score": score, "coverage_true": coverage_true, "coverage_pred": coverage_pred}
         rows.append(row)
 
     # Score per image
@@ -117,7 +94,6 @@ def main(argv):
     df = df.sort_values('coverage_true')
     bins = np.arange(0, 1.0, 0.05)
     bins = np.concatenate(([-1e-4], bins))
-    print(bins)
 
     grouped = df.groupby(pd.cut(df['coverage_true'], bins))
 

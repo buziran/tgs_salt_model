@@ -1,4 +1,5 @@
 import tensorflow as tf
+from sklearn.metrics import confusion_matrix
 from tensorflow.keras import backend as K
 from tensorflow.keras.losses import binary_crossentropy
 import numpy as np
@@ -70,3 +71,31 @@ def dice_loss(y_true, y_pred):
 
 def bce_dice_loss(y_true, y_pred):
     return binary_crossentropy(y_true, y_pred) + dice_loss(y_true, y_pred)
+
+def mean_score_per_image(y_true, y_pred):
+    """Calculate score per image"""
+    # GT, Predともに前景ゼロの場合はスコアを1とする
+    y_true = np.round(y_true).astype(np.int)
+    y_pred = np.round(y_pred).astype(np.int)
+
+    if np.any(y_true) == False and np.any(y_pred) == False:
+        return 1.
+
+    threasholds_iou = np.arange(0.5, 1.0, 0.05, dtype=float)
+    y_true = np.reshape(y_true, (-1))
+    y_pred = np.reshape(y_pred, (-1))
+    total_cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    sum_over_row = np.sum(total_cm, 0).astype(float)
+    sum_over_col = np.sum(total_cm, 1).astype(float)
+    cm_diag = np.diag(total_cm).astype(float)
+    denominator = sum_over_row + sum_over_col - cm_diag
+    denominator = np.where(np.greater(denominator, 0), denominator, np.ones_like(denominator))
+    # iou[0]: 背景のIoU
+    # iou[1]: 前景のIoU
+    iou = np.divide(cm_diag, denominator)
+    iou_fg = iou[1]
+    greater = np.greater(iou_fg, threasholds_iou)
+    score_per_image = np.mean(greater.astype(float))
+    return score_per_image
+
+

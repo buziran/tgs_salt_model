@@ -2,6 +2,7 @@ import math
 
 from tensorflow.python.keras.callbacks import TensorBoard
 import tensorflow.keras.backend as K
+import numpy as np
 
 
 def RLenc(img, order='F', format=True):
@@ -61,4 +62,9 @@ class MyTensorBoard(TensorBoard):
     def on_epoch_end(self, epoch, logs=None):
         logs.update({'lr': K.eval(self.model.optimizer.lr)})
         super().on_epoch_end(epoch, logs)
+
+
+def load_npz(path_pred):
+    npzfile = np.load(path_pred)
+    return npzfile['arr_0']
 

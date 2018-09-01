@@ -11,32 +11,40 @@ from constant import *
 
 
 class Dataset(object):
-    def __init__(self, path_input, is_test=False):
+    def __init__(self, path_input, is_test=False, adjust='resize'):
         self.path_input = path_input
         self.is_test = is_test
         if not self.is_test:
-            self.load_train()
+            self.load_train(adjust)
         else:
-            self.load_test()
+            self.load_test(adjust)
 
 
-    def load_train(self):
+    def load_train(self, adjust='resize'):
         train_ids = next(os.walk(os.path.join(self.path_input, "images")))[2]
         train_ids = sorted(train_ids)
 
         # Get and resize train images and masks
-        X_samples = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)
-        Y_samples = np.zeros((len(train_ids), IM_HEIGHT, IM_WIDTH, 1), dtype=np.bool)
+        if adjust in ['resize', 'pad']:
+            im_height, im_width = IM_HEIGHT, IM_WIDTH
+        elif adjust in ['never']:
+            im_height, im_width = ORIG_HEIGHT, ORIG_WIDTH
+
+        X_samples = np.zeros((len(train_ids), im_height, im_width, IM_CHAN), dtype=np.uint8)
+        Y_samples = np.zeros((len(train_ids), im_height, im_width, 1), dtype=np.bool)
         print('Getting and resizing train images and masks ... ')
         sys.stdout.flush()
         for n, id_ in tqdm_notebook(enumerate(train_ids), total=len(train_ids)):
             path = self.path_input
             img = load_img(path + '/images/' + id_)
             x = img_to_array(img)[:, :, 1]
-            x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
-            X_samples[n] = x
             mask = img_to_array(load_img(path + '/masks/' + id_))[:, :, 1]
-            Y_samples[n] = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)
+            if adjust == 'resize':
+                X_samples[n] = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
+                Y_samples[n] = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)
+            elif adjust == 'never':
+                X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
+                Y_samples[n] = np.reshape(mask, newshape=(im_height, im_width, 1))
 
         print('Done!')
 
@@ -46,20 +54,27 @@ class Dataset(object):
         self.X_samples = X_samples
         self.Y_samples = Y_samples
 
-    def load_test(self):
+    def load_test(self, adjust='resize'):
         test_ids = next(os.walk(os.path.join(self.path_input, "images")))[2]
         test_ids = sorted(test_ids)
 
         # Get and resize train images and masks
-        X_samples = np.zeros((len(test_ids), IM_HEIGHT, IM_WIDTH, IM_CHAN), dtype=np.uint8)
+        if adjust in ['resize', 'pad']:
+            im_height, im_width = IM_HEIGHT, IM_WIDTH
+        elif adjust in ['never']:
+            im_height, im_width = ORIG_HEIGHT, ORIG_WIDTH
+
+        X_samples = np.zeros((len(test_ids), im_height, im_width, IM_CHAN), dtype=np.uint8)
         print('Getting and resizing test images ... ')
         sys.stdout.flush()
         for n, id_ in tqdm_notebook(enumerate(test_ids), total=len(test_ids)):
             path = self.path_input
             img = load_img(path + '/images/' + id_)
             x = img_to_array(img)[:, :, 1]
-            x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
-            X_samples[n] = x
+            if adjust == 'resize':
+                X_samples[n] = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
+            else:
+                X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
 
         print('Done!')
 
