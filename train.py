@@ -52,6 +52,7 @@ def train(dataset):
     if FLAGS.early_stopping:
         callbacks += EarlyStopping(patience=5, verbose=1)
 
+    dataset.load_train(adjust=FLAGS.adjust)
     train_generator, valid_generator = dataset.create_train_generator(
         n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
     steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)

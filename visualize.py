@@ -85,7 +85,8 @@ def main(argv=None):
         tf.gfile.DeleteRecursively(FLAGS.visualize)
     tf.gfile.MakeDirs(FLAGS.visualize)
 
-    dataset = Dataset(FLAGS.input, adjust='never')
+    dataset = Dataset(FLAGS.input)
+    dataset.load_test(adjust='never')
     id_samples = dataset.id_samples
     X_samples = dataset.X_samples
     Y_samples = dataset.Y_samples

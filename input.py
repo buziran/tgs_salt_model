@@ -5,19 +5,15 @@ import numpy as np
 from sklearn.model_selection import KFold
 from tqdm import tqdm_notebook
 from skimage.transform import resize
+from skimage.util import pad
 from tensorflow.keras.preprocessing.image import load_img, img_to_array, ImageDataGenerator
 
 from constant import *
 
 
 class Dataset(object):
-    def __init__(self, path_input, is_test=False, adjust='resize'):
+    def __init__(self, path_input):
         self.path_input = path_input
-        self.is_test = is_test
-        if not self.is_test:
-            self.load_train(adjust)
-        else:
-            self.load_test(adjust)
 
 
     def load_train(self, adjust='resize'):
@@ -42,6 +38,13 @@ class Dataset(object):
             if adjust == 'resize':
                 X_samples[n] = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
                 Y_samples[n] = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)
+            elif adjust == 'pad':
+                height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
+                width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
+                x = pad(x, (height_padding, width_padding), mode='reflect')
+                mask = pad(mask, (height_padding, width_padding), mode='reflect')
+                X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
+                Y_samples[n] = np.reshape(mask, newshape=(im_height, im_width, 1))
             elif adjust == 'never':
                 X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
                 Y_samples[n] = np.reshape(mask, newshape=(im_height, im_width, 1))
@@ -73,6 +76,11 @@ class Dataset(object):
             x = img_to_array(img)[:, :, 1]
             if adjust == 'resize':
                 X_samples[n] = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
+            elif adjust == 'pad':
+                height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
+                width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
+                x = pad(x, (height_padding, width_padding), mode='reflect')
+                X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
             else:
                 X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
 

@@ -34,6 +34,10 @@ tf.flags.DEFINE_bool(
     'npz', True,
     """whether to save as npz""")
 
+tf.flags.DEFINE_enum(
+    'adjust', 'resize', enum_values=['resize', 'pad'],
+    help="""mode to adjust image 101=>128""")
+
 FLAGS = tf.flags.FLAGS
 
 
@@ -59,12 +63,10 @@ def save_npz(ys_pred, ids, path_out):
 
 def main(argv=None):
 
-    if tf.gfile.Exists(FLAGS.prediction):
-        tf.gfile.DeleteRecursively(FLAGS.prediction)
     tf.gfile.MakeDirs(FLAGS.prediction)
 
-    dataset = Dataset(FLAGS.input, is_test=True)
-
+    dataset = Dataset(FLAGS.input)
+    dataset.load_test(adjust=FLAGS.adjust)
     sample_generator = dataset.create_test_generator(batch_size=FLAGS.batch_size, shuffle=False, with_id=True)
 
     sess = tf.Session(config=tf.ConfigProto(
