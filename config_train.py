@@ -25,7 +25,7 @@ tf.flags.DEFINE_integer(
     'epochs_decay', 10, help="""decay epoch of learning rate""")
 
 tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'pad'], help="""mode to adjust image 101=>128""")
+    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'], help="""mode to adjust image 101=>128""")
 
 """Model"""
 tf.flags.DEFINE_bool('batch_norm', True, """whether to use batch-normalization""")

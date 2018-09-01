@@ -4,4 +4,4 @@ import tensorflow as tf
 import config
 
 tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'pad'], help="""mode to adjust image 101=>128""")
+    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'], help="""mode to adjust image 101=>128""")

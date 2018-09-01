@@ -35,7 +35,7 @@ tf.flags.DEFINE_bool(
     """whether to save as npz""")
 
 tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'pad'],
+    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'],
     help="""mode to adjust image 101=>128""")
 
 FLAGS = tf.flags.FLAGS
