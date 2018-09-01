@@ -52,23 +52,16 @@ def train(dataset):
     if FLAGS.early_stopping:
         callbacks += EarlyStopping(patience=5, verbose=1)
 
-    if FLAGS.legacy:
-        VALIDATION_SPLIT = 0.1
-        results = model.fit(
-            dataset.X_samples, dataset.Y_samples, validation_split=VALIDATION_SPLIT,
-            batch_size=FLAGS.batch_size, epochs=FLAGS.epochs,
-            callbacks=callbacks)
-    else:
-        train_generator, valid_generator = dataset.create_train_generator(
-            n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
-        steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
-        validation_steps = int(dataset.num_valid / FLAGS.batch_size)
+    train_generator, valid_generator = dataset.create_train_generator(
+        n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
+    steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
+    validation_steps = int(dataset.num_valid / FLAGS.batch_size)
 
-        results = model.fit_generator(
-            generator=train_generator, validation_data=valid_generator,
-            epochs=FLAGS.epochs, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps,
-            shuffle=True, max_queue_size=steps_per_epoch, workers=INPUT_WORKERS,
-            callbacks=callbacks)
+    results = model.fit_generator(
+        generator=train_generator, validation_data=valid_generator,
+        epochs=FLAGS.epochs, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps,
+        shuffle=True, max_queue_size=steps_per_epoch, workers=INPUT_WORKERS,
+        callbacks=callbacks)
 
 
 def main(argv=None):
