@@ -5,6 +5,7 @@ import os
 
 import pandas as pd
 import numpy as np
+from skimage.util import crop
 from tensorflow.keras.models import load_model
 import tensorflow as tf
 from skimage.transform import resize
@@ -31,6 +32,10 @@ tf.flags.DEFINE_bool(
     'debug', False,
     """Inference only 10 images""")
 
+tf.flags.DEFINE_enum(
+    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'],
+    help="""mode to adjust image 101=>128""")
+
 FLAGS = tf.flags.FLAGS
 
 
@@ -52,10 +57,14 @@ def main(argv=None):
 
     preds_test_upsampled = []
     for i in tnrange(len(preds_test)):
-        preds_test_upsampled.append(
-            resize(np.squeeze(preds_test[i]),
-                   (ORIG_HEIGHT, ORIG_WIDTH),
-                   mode='constant', preserve_range=True))
+        pred = np.squeeze(preds_test[i])
+        if FLAGS.adjust in ['resize', 'resize-cv']:
+            pred = resize(pred, (ORIG_HEIGHT, ORIG_WIDTH), mode='constant', preserve_range=True)
+        elif FLAGS.adjust in ['pad']:
+            height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
+            width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
+            pred = crop(pred, (height_padding, width_padding))
+        preds_test_upsampled.append(pred)
 
     # 四捨五入している
     pred_dict = {fn[:-4]: RLenc(np.round(preds_test_upsampled[i])) for i, fn in tqdm_notebook(enumerate(test_ids))}
