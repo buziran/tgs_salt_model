@@ -28,30 +28,43 @@ class Dataset(object):
             im_height, im_width = ORIG_HEIGHT, ORIG_WIDTH
 
         X_samples = np.zeros((len(train_ids), im_height, im_width, IM_CHAN), dtype=np.uint8)
-        Y_samples = np.zeros((len(train_ids), im_height, im_width, 1), dtype=np.bool)
+        Y_samples = np.zeros((len(train_ids), im_height, im_width, 2), dtype=np.float)
         print('Getting and resizing train images and masks ... ')
         sys.stdout.flush()
         for n, id_ in tqdm_notebook(enumerate(train_ids), total=len(train_ids)):
             path = self.path_input
-            img = load_img(path + '/images/' + id_)
-            x = img_to_array(img)[:, :, 1]
-            mask = img_to_array(load_img(path + '/masks/' + id_))[:, :, 1]
+            img_x = load_img(path + '/images/' + id_)
+            img_m = load_img(path + '/masks/' + id_)
+            x = img_to_array(img_x)[:, :, 1]
+            mask = np.round(img_to_array(img_m)[:, :, 1] / 255)
+            weight = np.empty_like(mask, dtype=np.float32)
+            weight.fill(1.0)
             if adjust == 'resize':
-                X_samples[n] = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
-                Y_samples[n] = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)
+                x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
+                mask = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)
+                weight = resize(weight, (128, 128, 1), mode='constant', preserve_range=True)
             if adjust == 'resize-cv':
-                X_samples[n] = np.reshape(cv2.resize(x, (128, 128), interpolation=cv2.INTER_LINEAR), (128, 128, 1))
-                Y_samples[n] = np.reshape(cv2.resize(mask, (128, 128), interpolation=cv2.INTER_NEAREST), (128, 128, 1))
+                x = np.reshape(cv2.resize(x, (128, 128), interpolation=cv2.INTER_LINEAR), (128, 128, 1))
+                mask = np.reshape(cv2.resize(mask, (128, 128), interpolation=cv2.INTER_NEAREST), (128, 128, 1))
+                weight = np.reshape(cv2.resize(weight, (128, 128), interpolation=cv2.INTER_NEAREST), (128, 128, 1))
             elif adjust == 'pad':
                 height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
                 width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
+                constant_values = ((0,0), (0,0))
                 x = pad(x, (height_padding, width_padding), mode='reflect')
                 mask = pad(mask, (height_padding, width_padding), mode='reflect')
-                X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
-                Y_samples[n] = np.reshape(mask, newshape=(im_height, im_width, 1))
+                weight = pad(weight, (height_padding, width_padding), mode='constant', constant_values=constant_values)
+                x = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
+                mask = np.reshape(mask, newshape=(im_height, im_width, 1))
+                weight = np.reshape(weight, newshape=(im_height, im_width, 1))
             elif adjust == 'never':
-                X_samples[n] = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
-                Y_samples[n] = np.reshape(mask, newshape=(im_height, im_width, 1))
+                x = np.reshape(x, newshape=(im_height, im_width, IM_CHAN))
+                mask = np.reshape(mask, newshape=(im_height, im_width, 1))
+                weight = np.reshape(weight, newshape=(im_height, im_width, 1))
+
+            mask_and_weight = np.concatenate((mask, weight), axis=2)
+            X_samples[n] = x
+            Y_samples[n] = mask_and_weight
 
         print('Done!')
 
@@ -127,7 +140,6 @@ class Dataset(object):
         data_gen_args = augment_dict
         print("data_gen_args is {}".format(data_gen_args))
         seed = 1
-
 
         X_train_datagen = ImageDataGenerator(**data_gen_args)
         Y_train_datagen = ImageDataGenerator(**data_gen_args)

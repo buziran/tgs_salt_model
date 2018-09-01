@@ -4,7 +4,9 @@
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 
-from metrics import mean_iou, mean_score, bce_dice_loss
+from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy
+from util import get_metrics
+
 
 def build_model_ref(
         height, width, channels, optimizer='adam', dice=False, out_ch=1, start_ch=16, depth=5, inc_rate=2,
@@ -47,11 +49,11 @@ def build_model_ref(
     img_shape = [height, width, channels]
     model = UNet(img_shape, out_ch, start_ch, depth, inc_rate, activation, drop_out, batch_norm, maxpool, upconv, residual)
     if dice:
-        loss = bce_dice_loss
+        loss = weighted_bce_dice_loss
     else:
-        loss = 'binary_crossentropy'
+        loss = weighted_binary_crossentropy
 
-    model.compile(optimizer=optimizer, loss=loss, metrics=[mean_iou, mean_score])
+    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 
 
@@ -117,11 +119,11 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimiz
 
     model = Model(inputs=[inputs], outputs=[outputs])
     if dice:
-        loss = bce_dice_loss
+        loss = weighted_bce_dice_loss
     else:
-        loss = 'binary_crossentropy'
+        loss = weighted_binary_crossentropy
 
-    model.compile(optimizer=optimizer, loss=loss, metrics=[mean_iou, mean_score])
+    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 
 

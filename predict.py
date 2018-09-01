@@ -14,6 +14,7 @@ from skimage.transform import resize
 from input import Dataset
 from metrics import mean_iou, mean_score
 from constant import *
+from util import get_metrics, get_custom_objects
 
 tf.flags.DEFINE_string(
     'input', '../input/train',
@@ -75,8 +76,8 @@ def main(argv=None):
     K.set_session(sess)
 
     path_model = os.path.join(FLAGS.model, NAME_MODEL)
-    model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score}, compile=False)
-    model.compile(optimizer="adam", loss='binary_crossentropy', metrics=[mean_iou, mean_score])
+    model = load_model(path_model, custom_objects=get_custom_objects(), compile=False)
+    model.compile(optimizer="adam", loss='binary_crossentropy', metrics=get_metrics())
 
     num_batch = np.ceil(dataset.num_samples / FLAGS.batch_size)
     for id_batch, (xs, ids) in enumerate(tqdm(sample_generator, total=num_batch)):

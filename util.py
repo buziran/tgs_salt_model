@@ -4,6 +4,8 @@ from tensorflow.python.keras.callbacks import TensorBoard
 import tensorflow.keras.backend as K
 import numpy as np
 
+from metrics import weighted_mean_score, weighted_mean_iou
+
 
 def RLenc(img, order='F', format=True):
     """
@@ -68,3 +70,10 @@ def load_npz(path_pred):
     npzfile = np.load(path_pred)
     return npzfile['arr_0']
 
+
+def get_metrics():
+    return [weighted_mean_iou, weighted_mean_score]
+
+
+def get_custom_objects():
+    return {'weighted_mean_iou': weighted_mean_iou, 'weighted_mean_score': weighted_mean_score}

@@ -9,13 +9,14 @@ from tensorflow.keras import backend as K
 import tensorflow.keras.losses
 
 from input import Dataset
-from metrics import mean_iou, mean_score, bce_dice_loss
+from metrics import weighted_bce_dice_loss, weighted_binary_crossentropy
 from constant import *
 import config_eval
+from util import get_metrics, get_custom_objects
 
 FLAGS = tf.flags.FLAGS
 
-tensorflow.keras.losses.bce_dice_loss = bce_dice_loss
+tensorflow.keras.losses.weighted_bce_dice_loss = weighted_bce_dice_loss
 
 
 def eval(dataset):
@@ -33,12 +34,13 @@ def eval(dataset):
     with tf.Graph().as_default():
         with tf.Session(config=config) as sess:
             K.set_session(sess)
-            model = load_model(path_model, custom_objects={'mean_iou': mean_iou, 'mean_score': mean_score}, compile=False)
+            model = load_model(
+                path_model, compile=False, custom_objects=get_custom_objects())
             if FLAGS.dice:
-                loss = bce_dice_loss
+                loss = weighted_bce_dice_loss
             else:
-                loss = 'binary_crossentropy'
-            model.compile(optimizer="adam", loss=loss, metrics=[mean_iou, mean_score])
+                loss = weighted_binary_crossentropy
+            model.compile(optimizer="adam", loss=loss, metrics=get_metrics())
 
             steps_train = dataset.num_train / BATCH_SIZE
             steps_valid = dataset.num_valid / BATCH_SIZE

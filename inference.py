@@ -12,7 +12,7 @@ from tqdm import tnrange, tqdm_notebook
 
 from util import RLenc
 from input import input_test
-from metrics import mean_iou, mean_score, bce_dice_loss
+from metrics import mean_iou, mean_score, weighted_bce_dice_loss
 from constant import *
 
 tf.flags.DEFINE_string(

@@ -17,6 +17,12 @@ def mean_iou(y_true, y_pred):
     return K.mean(K.stack(prec), axis=0)
 
 
+def weighted_mean_iou(y_true_and_weight, y_pred):
+    y_true, weight = split_label_weight(y_true_and_weight)
+    mask = tf.greater(weight, 0)
+    return mean_iou(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
+
+
 def mean_score(y_true, y_pred):
     """
     Calculate mean score for batch images
@@ -60,6 +66,12 @@ def mean_score(y_true, y_pred):
     return tf.reduce_mean(scores_per_image)
 
 
+def weighted_mean_score(y_true_and_weight, y_pred):
+    y_true, weight = split_label_weight(y_true_and_weight)
+    mask = tf.to_int32(tf.greater(weight, 0))
+    return mean_score(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
+
+
 def dice_loss(y_true, y_pred):
     smooth = 1.
     y_true_f = K.flatten(y_true)
@@ -69,8 +81,20 @@ def dice_loss(y_true, y_pred):
     return 1. - score
 
 
-def bce_dice_loss(y_true, y_pred):
-    return binary_crossentropy(y_true, y_pred) + dice_loss(y_true, y_pred)
+def weighted_binary_crossentropy(y_true_and_weight, y_pred):
+    y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
+    bce = K.binary_crossentropy(y_true, y_pred)
+    wbce = bce * weight
+    return K.mean(wbce)
+
+
+def weighted_bce_dice_loss(y_true_and_weight, y_pred):
+    y_true, weight = split_label_weight(y_true_and_weight)
+    mask = tf.greater(weight, 1)
+    wbce = weighted_binary_crossentropy(y_true_and_weight, y_pred)
+    dloss = dice_loss(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
+    return wbce + dloss
+
 
 def mean_score_per_image(y_true, y_pred):
     """Calculate score per image"""
@@ -99,3 +123,6 @@ def mean_score_per_image(y_true, y_pred):
     return score_per_image
 
 
+def split_label_weight(label_and_weight):
+    label, weight = tf.split(label_and_weight, [1, 1], axis=3)
+    return label, weight

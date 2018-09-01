@@ -44,7 +44,7 @@ def train(dataset):
 
     path_model = os.path.join(FLAGS.model, NAME_MODEL)
 
-    checkpointer = ModelCheckpoint(path_model, monitor='val_mean_score', verbose=1, save_best_only=True, mode='max')
+    checkpointer = ModelCheckpoint(path_model, monitor='val_weighted_mean_score', verbose=1, save_best_only=True, mode='max')
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)
     lrscheduler = LearningRateScheduler(StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay), verbose=1)
 
