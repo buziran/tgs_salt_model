@@ -16,6 +16,7 @@ flags.DEFINE_string("eval", "", """evaluation command.""")
 flags.DEFINE_string("name", "no-name", """name of job""")
 flags.DEFINE_bool("dry-run", False, """Do not upload anything""", short_name="n")
 flags.DEFINE_bool("force", False, """Ignore un-committed files""", short_name="f")
+flags.DEFINE_bool("verbose", True, """whether to print job commands""")
 
 FLAGS = flags.FLAGS
 
@@ -44,6 +45,10 @@ def main(argv):
 
     if not FLAGS.force:
         check_commit()
+
+    if FLAGS.verbose:
+        print("train command: {}".format(FLAGS.train))
+        print("eval command: {}".format(FLAGS.eval))
 
     datetime_str = str(datetime.datetime.now())
 
