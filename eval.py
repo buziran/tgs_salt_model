@@ -25,7 +25,7 @@ def eval(dataset):
 
     config = tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
-            per_process_gpu_memory_fraction=0.9, allow_growth=True))
+            per_process_gpu_memory_fraction=0.8, allow_growth=True))
 
     dataset.load_train(adjust=FLAGS.adjust)
     train_generator, valid_generator = dataset.create_train_generator(
@@ -34,8 +34,7 @@ def eval(dataset):
     with tf.Graph().as_default():
         with tf.Session(config=config) as sess:
             K.set_session(sess)
-            model = load_model(
-                path_model, compile=False, custom_objects=get_custom_objects())
+            model = load_model(path_model, compile=False)
             if FLAGS.dice:
                 loss = weighted_bce_dice_loss
             else:
@@ -44,9 +43,10 @@ def eval(dataset):
 
             steps_train = dataset.num_train / BATCH_SIZE
             steps_valid = dataset.num_valid / BATCH_SIZE
-            metrics = model.evaluate_generator(train_generator, steps=steps_train, max_queue_size=dataset.num_train)
+            max_queue_size = BATCH_SIZE * 4
+            metrics = model.evaluate_generator(train_generator, steps=steps_train, max_queue_size=max_queue_size)
             print("Training loss:{}, iou:{}, score:{}".format(metrics[0], metrics[1], metrics[2]))
-            metrics = model.evaluate_generator(valid_generator, steps=steps_valid, max_queue_size=dataset.num_train)
+            metrics = model.evaluate_generator(valid_generator, steps=steps_valid, max_queue_size=max_queue_size)
             print("Validation loss:{}, iou:{}, score:{}".format(metrics[0], metrics[1], metrics[2]))
 
 

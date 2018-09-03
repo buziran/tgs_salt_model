@@ -87,8 +87,8 @@ def main(argv=None):
     K.set_session(sess)
 
     path_model = os.path.join(FLAGS.model, NAME_MODEL)
-    model = load_model(path_model, custom_objects=get_custom_objects(), compile=False)
-    model.compile(optimizer="adam", loss='binary_crossentropy', metrics=get_metrics())
+    model = load_model(path_model, compile=False)
+    model.compile(optimizer="adam", loss='binary_crossentropy')
 
     num_batch = np.ceil(dataset.num_samples / FLAGS.batch_size)
     for id_batch, (xs, ids) in enumerate(tqdm(sample_generator, total=num_batch)):
