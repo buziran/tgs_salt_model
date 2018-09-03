@@ -55,7 +55,7 @@ def load_npz(path_pred):
 def main(argv):
 
     model_dirs = list_model(FLAGS.model)
-    pred_arg_template = ["python", "predict.py", "--input", FLAGS.input, '--npz']
+    pred_arg_template = ["python", "predict.py", "--input", FLAGS.input, '--npz'] + argv[1:]
 
     # Predict with each model
     with TemporaryDirectory(prefix="pred-", delete=FLAGS.delete) as tdir:
