@@ -7,7 +7,7 @@ Implementation of Random Erasing for Keras
 import numpy as np
 
 class RandomErasing(object):
-    def __init__(self, probability=0.5, min_size=0.02, max_size=0.4, min_aspect_ratio=0.3, max_aspect_ratio=1/0.3, min_val=0, max_val=255, pixel_wise=False, seed=None):
+    def __init__(self, probability=0.5, min_size=0.02, max_size=0.4, min_aspect_ratio=0.3, max_aspect_ratio=1/0.3, min_val=0, max_val=256, pixel_wise=False, seed=None):
         self.probability = probability
         self.min_size = min_size
         self.max_size = max_size
@@ -22,6 +22,7 @@ class RandomErasing(object):
     def __call__(self, img):
         if self.seed is not None:
             np.random.seed(self.seed + self.cnt)
+        self.cnt += 1
 
         rank = len(img.shape)
 
@@ -50,17 +51,23 @@ class RandomErasing(object):
 
         if self.pixel_wise:
             if rank == 3:
-                shape = (h,w,channels)
+                size = (h,w,channels)
             elif rank == 2:
-                shape = (h,w)
-            c = np.random.uniform(self.min_val, self.max_val, shape)
+                size = (h,w)
         else:
-            c = np.random.uniform(self.min_val, self.max_val)
+            size = None
+
+        if np.issubdtype(img.dtype, np.integer):
+            random_fn = np.random.randint
+        elif np.issubdtype(img.dtype, np.floating):
+            random_fn = np.random.uniform
+        else:
+            raise NotImplementedError()
+
+        c = random_fn(self.min_val, self.max_val, size)
 
         erased_img = np.copy(img)
         erased_img[top:top + h, left:left + w, :] = c
-
-        self.cnt += 1
 
         return erased_img
 
