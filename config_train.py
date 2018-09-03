@@ -61,4 +61,7 @@ tf.flags.DEFINE_float(
 tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
+tf.flags.DEFINE_enum(
+    'random_erase', None, enum_values=['pixel', 'constant'], help="""mode to fill in random-erasing""")
+
 

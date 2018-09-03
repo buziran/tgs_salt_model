@@ -54,7 +54,8 @@ def train(dataset):
 
     dataset.load_train(adjust=FLAGS.adjust)
     train_generator, valid_generator = dataset.create_train_generator(
-        n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
+        n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
+        augment_dict=augment_dict(), random_erase=FLAGS.random_erase)
 
     if FLAGS.debug:
         debug_img_show(train_generator, valid_generator)

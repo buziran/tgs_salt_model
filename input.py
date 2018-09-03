@@ -10,6 +10,7 @@ from skimage.util import pad
 from tensorflow.keras.preprocessing.image import load_img, img_to_array, ImageDataGenerator
 
 from constant import *
+from random_erase import RandomErasing
 
 
 class Dataset(object):
@@ -135,14 +136,25 @@ class Dataset(object):
         self.Y_valid = self.Y_samples[valid_index]
         self.id_valid = self.id_samples[valid_index]
 
-    def create_train_generator(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, shuffle=True, with_id=False):
+    def create_train_generator(self, n_splits=10, idx_kfold=0, batch_size=8, augment_dict={}, random_erase=None, shuffle=True, with_id=False):
         self.kfold_split(n_splits, idx_kfold)
         data_gen_args = augment_dict
         print("data_gen_args is {}".format(data_gen_args))
         seed = 1
 
-        X_train_datagen = ImageDataGenerator(**data_gen_args)
-        Y_train_datagen = ImageDataGenerator(**data_gen_args)
+        if random_erase == 'pixel':
+            random_erase_x = RandomErasing(seed=seed, min_val=0, max_val=256, pixel_wise=True)
+            random_erase_y = RandomErasing(seed=seed, min_val=0.0, max_val=0.0)
+        elif random_erase == 'constant':
+            random_erase_x = RandomErasing(seed=seed, min_val=0, max_val=256, pixel_wise=False)
+            random_erase_y = RandomErasing(seed=seed, min_val=0.0, max_val=0.0)
+        else:
+            random_erase_x = None
+            random_erase_y = None
+
+
+        X_train_datagen = ImageDataGenerator(**data_gen_args, preprocessing_function=random_erase_x)
+        Y_train_datagen = ImageDataGenerator(**data_gen_args, preprocessing_function=random_erase_y)
         id_train = self.id_train if with_id else None
         X_train_generator = X_train_datagen.flow(self.X_train, y=id_train, seed=seed, batch_size=batch_size, shuffle=shuffle)
         Y_train_generator = Y_train_datagen.flow(self.Y_train, seed=seed, batch_size=batch_size, shuffle=shuffle)
