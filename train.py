@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import os
+import json
+from pprint import pprint
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
@@ -13,6 +16,8 @@ from util import StepDecay, MyTensorBoard
 import config_train
 
 FLAGS = tf.flags.FLAGS
+
+FLAGS_FILENAME = "flags.json"
 
 
 def augment_dict():
@@ -27,6 +32,11 @@ def augment_dict():
 
 
 def train(dataset):
+    flag_values_dict = FLAGS.flag_values_dict()
+    pprint(flag_values_dict, indent=4)
+    with open(os.path.join(FLAGS.model, FLAGS_FILENAME), 'w') as f:
+        json.dump(flag_values_dict, f, indent=4)
+
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
             per_process_gpu_memory_fraction=0.9, allow_growth=True)))
