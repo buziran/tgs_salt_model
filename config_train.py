@@ -27,6 +27,9 @@ tf.flags.DEFINE_integer(
 tf.flags.DEFINE_enum(
     'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'], help="""mode to adjust image 101=>128""")
 
+tf.flags.DEFINE_bool(
+    'debug', False, "Run as debug mode")
+
 """Model"""
 tf.flags.DEFINE_bool('batch_norm', True, """whether to use batch-normalization""")
 

@@ -55,6 +55,10 @@ def train(dataset):
     dataset.load_train(adjust=FLAGS.adjust)
     train_generator, valid_generator = dataset.create_train_generator(
         n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, augment_dict=augment_dict())
+
+    if FLAGS.debug:
+        debug_img_show(train_generator, valid_generator)
+
     steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
     validation_steps = int(dataset.num_valid / FLAGS.batch_size)
 
@@ -64,6 +68,35 @@ def train(dataset):
         shuffle=True, max_queue_size=steps_per_epoch, workers=INPUT_WORKERS,
         callbacks=callbacks)
 
+
+def debug_img_show(train_generator, valid_generator):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    def show_img_label_mask(images, labels_and_masks, prefix=""):
+        for image, label_and_mask in zip(images, labels_and_masks):
+            image = np.squeeze(image)
+            label = label_and_mask[:,:,0]
+            mask = label_and_mask[:,:,1]
+            plt.title(prefix + "image")
+            plt.imshow(image, cmap='gray', vmin=0, vmax=255)
+            plt.show()
+
+            plt.title(prefix + "label")
+            plt.imshow(label, cmap='gray', vmin=0, vmax=1)
+            plt.show()
+
+            plt.title(prefix + "mask")
+            plt.imshow(mask, cmap='gray', vmin=0, vmax=1)
+            plt.show()
+
+    for images, labels_and_masks in train_generator:
+        show_img_label_mask(images, labels_and_masks, prefix="training ")
+        break
+
+    for images, labels_and_masks in valid_generator:
+        show_img_label_mask(images, labels_and_masks, prefix="validation ")
+        break
 
 def main(argv=None):
     dataset = Dataset(FLAGS.input)
