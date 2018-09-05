@@ -22,7 +22,9 @@ flags.DEFINE_string(
     'config', os.path.join(os.path.dirname(__file__), 'config.json'), 'path to GCP token file.')
 
 
-def result_upload(name, path, summary, datetime_str=None):
+def result_upload(name, path, summary, command=None, datetime_str=None):
+    if command is None:
+        command = " ".join(sys.argv)
     if datetime_str is None:
         datetime_str = str(datetime.datetime.now())
     service_manager = ServiceManager(FLAGS.credentials)
@@ -30,7 +32,7 @@ def result_upload(name, path, summary, datetime_str=None):
     service = service_manager.get_drive_service()
     drive_path = upload_outputs(service, name, path, config)
 
-    job_info = create_job_info(name, datetime_str, summary, drive_path)
+    job_info = create_job_info(name, datetime_str, summary, command, drive_path)
     service = service_manager.get_sheets_service()
     append_row(service, job_info, config)
 
@@ -40,9 +42,7 @@ def get_config():
         config = json.load(f)
     return config
 
-
-def create_job_info(name, datetime_str, summary, drive_path):
-    command = " ".join(sys.argv)
+def create_job_info(name, datetime_str, summary, command, drive_path):
     repo = git.Repo(os.path.dirname(__file__), search_parent_directories=True)
     commit = repo.head.object.hexsha
     job_info = [name, datetime_str, commit, command, drive_path, summary]
