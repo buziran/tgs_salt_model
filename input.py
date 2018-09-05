@@ -18,7 +18,7 @@ class Dataset(object):
         self.path_input = path_input
 
 
-    def load_train(self, adjust='resize'):
+    def load_train(self, adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None):
         train_ids = next(os.walk(os.path.join(self.path_input, "images")))[2]
         train_ids = sorted(train_ids)
 
@@ -39,7 +39,30 @@ class Dataset(object):
             x = img_to_array(img_x)[:, :, 1]
             mask = np.round(img_to_array(img_m)[:, :, 1] / 255)
             weight = np.empty_like(mask, dtype=np.float32)
-            weight.fill(1.0)
+
+            if weight_fg == 1.0 and weight_bg == 1.0 and weight_adaptive is None:
+                weight.fill(1.0)
+            elif weight_adaptive is not None:
+                # Threshold to apply weight_adaptive
+                tmin, tmax = weight_adaptive
+                coverage_fg = np.mean(mask)
+                if coverage_fg > tmax or coverage_fg == 0.0:
+                    weight.fill(1.0)
+                elif coverage_fg < tmin:
+                    weight_bg = 0.5 / (1 - coverage_fg)
+                    weight_fg = (1-weight_bg * (1-coverage_fg)) / coverage_fg
+                    weight[np.where(mask>0.5)] = weight_fg
+                    weight[np.where(mask<=0.5)] = weight_bg
+                else:
+                    weight[np.where(mask>0.5)] = 0.5 / coverage_fg
+                    weight[np.where(mask<=0.5)] = 0.5 / (1 - coverage_fg)
+
+                assert np.any(np.isinf(weight)) == False
+                assert 0.99 <= np.mean(weight) <= 1.01
+            else:
+                weight[np.where(mask>0.5)] = weight_fg
+                weight[np.where(mask<=0.5)] = weight_bg
+
             if adjust == 'resize':
                 x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
                 mask = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)

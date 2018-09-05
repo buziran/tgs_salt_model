@@ -62,7 +62,14 @@ def train(dataset):
     if FLAGS.early_stopping:
         callbacks += EarlyStopping(patience=5, verbose=1)
 
-    dataset.load_train(adjust=FLAGS.adjust)
+    # FLAGS.weight_ad is parsed to [coverage_min, coverage_max], threshold to apply adaptive weight
+    if FLAGS.weight_ad is not None:
+        weight_adaptive = [float(x) for x in FLAGS.weight_ad]
+    else:
+        weight_adaptive = None
+
+    dataset.load_train(
+        adjust=FLAGS.adjust, weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive)
     train_generator, valid_generator = dataset.create_train_generator(
         n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
         augment_dict=augment_dict(), random_erase=FLAGS.random_erase)
