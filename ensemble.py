@@ -57,14 +57,13 @@ def main(argv):
 
     # Predict with each model
     with TemporaryDirectory(prefix="pred-", delete=FLAGS.delete) as tdir:
-        tdir = "/tmp/pred-x0pmk6pu"
         print("Temporary directory {} is created".format(tdir))
         path_preds = []
         for d in model_dirs:
             dirname = os.path.basename(os.path.dirname(d))
             path_pred = os.path.join(tdir, dirname)
             pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred]
-            # subprocess.run(pred_arg)
+            subprocess.run(pred_arg)
             path_preds.append(path_pred)
 
         fn_dict = {"min": np.min, "max": np.max, "mean": np.mean, "median": np.median}
