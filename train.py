@@ -85,19 +85,20 @@ def debug_img_show(train_generator, valid_generator):
     import matplotlib.pyplot as plt
 
     def show_img_label_mask(images, labels_and_masks, prefix=""):
-        for image, label_and_mask in zip(images, labels_and_masks):
+        num_img = images.shape[0]
+        for i, (image, label_and_mask) in enumerate(zip(images, labels_and_masks)):
             image = np.squeeze(image)
             label = label_and_mask[:,:,0]
             mask = label_and_mask[:,:,1]
-            plt.title(prefix + "image")
+            plt.title(prefix + "image {}/{}".format(i, num_img))
             plt.imshow(image, cmap='gray', vmin=0, vmax=255)
             plt.show()
 
-            plt.title(prefix + "label")
+            plt.title(prefix + "label {}/{}".format(i, num_img))
             plt.imshow(label, cmap='gray', vmin=0, vmax=1)
             plt.show()
 
-            plt.title(prefix + "mask")
+            plt.title(prefix + "mask {}/{}".format(i, num_img))
             plt.imshow(mask, cmap='gray', vmin=0, vmax=1)
             plt.show()
 
