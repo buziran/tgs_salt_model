@@ -99,7 +99,8 @@ def debug_img_show(train_generator, valid_generator):
             plt.show()
 
             plt.title(prefix + "mask {}/{}".format(i, num_img))
-            plt.imshow(mask, cmap='gray', vmin=0, vmax=1)
+            plt.imshow(mask, cmap='gray', vmin=0, vmax=np.max(mask))
+            plt.colorbar()
             plt.show()
 
     for images, labels_and_masks in train_generator:
