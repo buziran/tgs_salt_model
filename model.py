@@ -3,6 +3,7 @@
 
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
+from tensorflow.python.keras.models import load_model as _load_model
 
 from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy
 from util import get_metrics
@@ -123,6 +124,17 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimiz
     else:
         loss = weighted_binary_crossentropy
 
+    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
+    return model
+
+
+def load_model(path_model, optimizer='adam', dice=False):
+    if dice:
+        loss = weighted_bce_dice_loss
+    else:
+        loss = weighted_binary_crossentropy
+
+    model = _load_model(path_model, compile=False)
     model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 

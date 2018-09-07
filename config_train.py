@@ -50,6 +50,7 @@ tf.flags.DEFINE_integer('depth', 5, """number of channel at UNet first layer""")
 
 tf.flags.DEFINE_integer('start_ch', 16, """number of channel at UNet first layer""")
 
+tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
 
 """Augmentations"""
 tf.flags.DEFINE_bool(

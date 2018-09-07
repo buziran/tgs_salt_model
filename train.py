@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
 import tensorflow.keras.backend as K
 
-from model import build_model, build_model_ref
+from model import build_model, build_model_ref, load_model
 from input import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard
@@ -42,7 +42,10 @@ def train(dataset):
             per_process_gpu_memory_fraction=0.9, allow_growth=True)))
     K.set_session(sess)
     with tf.device('/gpu:0'):
-        if not FLAGS.use_ref:
+        if FLAGS.restore is not None:
+            path_restore = os.path.join(FLAGS.restore, NAME_MODEL)
+            model = load_model(path_restore)
+        elif not FLAGS.use_ref:
             model = build_model(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice)
         else:
