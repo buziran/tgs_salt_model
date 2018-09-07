@@ -10,7 +10,7 @@ import yaml
 from gcp.upload import result_upload
 from git import Repo
 from absl import app, flags
-from skopt import gp_minimize
+from skopt import gp_minimize, dummy_minimize
 from skopt.space import Categorical, Integer, Real
 
 flags.DEFINE_string("yaml", "", """path to yaml file.""", short_name='y')
@@ -139,14 +139,19 @@ def parse_yaml(path_yaml):
 
     params, spaces = parse_parameters(params_dict)
 
-    return name_templ, train_templ, eval_templ, params, spaces, preprocess
+    if "minimizer" in yaml_dict:
+        minimizer = yaml_dict["minimizer"]
+    else:
+        minimizer = "gp_minimize"
+
+    return name_templ, train_templ, eval_templ, params, spaces, preprocess, minimizer
 
 
 def main(argv):
     if not FLAGS.force:
         check_commit()
 
-    name_templ, train_templ, eval_templ, params, spaces, preprocess = parse_yaml(FLAGS.yaml)
+    name_templ, train_templ, eval_templ, params, spaces, preprocess, minimizer = parse_yaml(FLAGS.yaml)
 
     if FLAGS.verbose:
         for param, space in zip(params, spaces):
@@ -160,7 +165,13 @@ def main(argv):
     else:
         func = lambda x: -1 * job(x)
 
-    res = gp_minimize(func, spaces, n_calls=FLAGS.calls)
+    if minimizer == "gp_minimize":
+        res = gp_minimize(func, spaces, n_calls=FLAGS.calls)
+    elif minimizer == "dummy_minimize":
+        res = dummy_minimize(func, spaces, n_calls=FLAGS.calls)
+    else:
+        raise ValueError("minimizer {} is invalid".format(minimizer))
+
     print(res.x, res.fun)
 
 
