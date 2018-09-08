@@ -44,14 +44,15 @@ def train(dataset):
     with tf.device('/gpu:0'):
         if FLAGS.restore is not None:
             path_restore = os.path.join(FLAGS.restore, NAME_MODEL)
-            model = load_model(path_restore)
+            model = load_model(path_restore, optimizer=FLAGS.opt)
         elif not FLAGS.use_ref:
             model = build_model(
-                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice)
+                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice,
+                optimizer=FLAGS.opt)
         else:
             model = build_model_ref(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice,
-                depth=FLAGS.depth, start_ch=FLAGS.start_ch)
+                depth=FLAGS.depth, start_ch=FLAGS.start_ch, optimizer=FLAGS.opt)
 
     print(model.summary())
 
