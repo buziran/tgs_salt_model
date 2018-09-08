@@ -5,6 +5,8 @@ import sys
 import shlex
 import subprocess
 import datetime
+
+import os
 import yaml
 
 from gcp.upload import result_upload
@@ -12,17 +14,19 @@ from git import Repo
 from absl import app, flags
 from skopt import gp_minimize, dummy_minimize
 from skopt.space import Categorical, Integer, Real
+import pandas as pd
 
 flags.DEFINE_string("yaml", "", """path to yaml file.""", short_name='y')
+flags.DEFINE_string("log", "../opt_log", """path to log directory.""")
 flags.DEFINE_bool("dry-run", False, """Do not upload anything""", short_name="n")
 flags.DEFINE_bool("force", False, """Ignore un-committed files""", short_name="f")
 flags.DEFINE_bool("verbose", True, """whether to print job commands""")
-flags.DEFINE_bool("maximize", True, """whether to maximize the score""")
-flags.DEFINE_integer("calls", 100, """Number of calls to func""")
+flags.DEFINE_bool("debug", False, """whether to return dummy score and not execute job""")
 
 FLAGS = flags.FLAGS
 
 OUTPUT_PATH = "../output"
+HISTORY_SHEET_NAME = "history.csv"
 
 
 def check_commit():
@@ -43,7 +47,7 @@ def yn(message):
 
 
 class Job(object):
-    def __init__(self, name_templ, train_templ, eval_templ, params, preprocess="", upload=True, verbose=True):
+    def __init__(self, name_templ, train_templ, eval_templ, params, preprocess="", upload=True, verbose=True, debug=False):
         self.name_templ = name_templ
         self.train_templ = train_templ
         self.eval_templ = eval_templ
@@ -51,8 +55,13 @@ class Job(object):
         self.preprocess_args = preprocess
         self.upload = upload
         self.verbose = verbose
+        self.debug = debug
 
     def __call__(self, param_vals):
+        if self.debug:
+            import numpy as np
+            return np.random.uniform()
+
         name = self.set_param_val(self.name_templ, param_vals)
         train_args = self.set_param_val(self.train_templ, param_vals)
         eval_args = self.set_param_val(self.eval_templ, param_vals)
@@ -95,11 +104,12 @@ class Job(object):
         return score
 
     def set_param_val(self, template, param_vals):
-        args = template
+        _template = template
         for param, val in zip(self.params, param_vals):
-            if param in args:
-                args = args.replace(param, str(val))
-        return args
+            if param in _template:
+                target = "<{}>".format(param)
+                _template = _template.replace(target, str(val))
+        return _template
 
 
 def parse_parameters(parameter_dict):
@@ -139,40 +149,54 @@ def parse_yaml(path_yaml):
 
     params, spaces = parse_parameters(params_dict)
 
-    if "minimizer" in yaml_dict:
-        minimizer = yaml_dict["minimizer"]
+    if "optimizer" in yaml_dict:
+        optimizer = yaml_dict["optimizer"]
     else:
-        minimizer = "gp_minimize"
+        optimizer = {"type": "bayesian", "maximize": False, "config": {}}
 
-    return name_templ, train_templ, eval_templ, params, spaces, preprocess, minimizer
+    return name_templ, train_templ, eval_templ, params, spaces, preprocess, optimizer
 
 
 def main(argv):
     if not FLAGS.force:
         check_commit()
 
-    name_templ, train_templ, eval_templ, params, spaces, preprocess, minimizer = parse_yaml(FLAGS.yaml)
+    os.makedirs(FLAGS.log, exist_ok=True)
+    path_history = os.path.join(FLAGS.log, HISTORY_SHEET_NAME)
+
+    name_templ, train_templ, eval_templ, params, spaces, preprocess, optimizer = parse_yaml(FLAGS.yaml)
 
     if FLAGS.verbose:
         for param, space in zip(params, spaces):
             print("{}: {}".format(param, space))
 
     upload = not FLAGS['dry-run'].value
-    job = Job(name_templ, train_templ, eval_templ, params, preprocess, upload=upload, verbose=FLAGS.verbose)
+    job = Job(
+        name_templ, train_templ, eval_templ, params, preprocess, upload=upload, verbose=FLAGS.verbose, debug=FLAGS.debug)
+    callbacks = [LogCallback(params=params, path_out=path_history)]
 
-    if not FLAGS.maximize:
+    if not optimizer["maximize"]:
         func = job
     else:
         func = lambda x: -1 * job(x)
 
-    if minimizer == "gp_minimize":
-        res = gp_minimize(func, spaces, n_calls=FLAGS.calls)
-    elif minimizer == "dummy_minimize":
-        res = dummy_minimize(func, spaces, n_calls=FLAGS.calls)
+    if optimizer["type"] == "bayesian":
+        res = gp_minimize(func, spaces, callback=callbacks, **optimizer["config"])
+    elif optimizer["type"] == "random":
+        res = dummy_minimize(func, spaces, callback=callbacks, **optimizer["config"])
     else:
-        raise ValueError("minimizer {} is invalid".format(minimizer))
+        raise ValueError("minimizer {} is invalid".format(optimizer["type"]))
 
-    print(res.x, res.fun)
+
+class LogCallback(object):
+    def __init__(self, params, path_out):
+        self.params = params
+        self.path_out = path_out
+
+    def __call__(self, res):
+        df = pd.DataFrame(columns=self.params, data=res.x_iters)
+        df['func_vals'] = res.func_vals
+        df.to_csv(self.path_out)
 
 
 if __name__ == '__main__':
