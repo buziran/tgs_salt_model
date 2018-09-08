@@ -34,7 +34,7 @@ tf.flags.DEFINE_bool(
 
 tf.flags.DEFINE_enum(
     'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'],
-    help="""mode to adjust image 101=>128""")
+    help="""mode to adjust image size""")
 
 FLAGS = tf.flags.FLAGS
 

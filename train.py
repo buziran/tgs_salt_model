@@ -84,11 +84,12 @@ def train(dataset):
 
     steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
     validation_steps = int(dataset.num_valid / FLAGS.batch_size)
+    max_queue_size = FLAGS.batch_size * 10
 
     results = model.fit_generator(
         generator=train_generator, validation_data=valid_generator,
         epochs=FLAGS.epochs, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps,
-        shuffle=True, max_queue_size=steps_per_epoch, workers=INPUT_WORKERS,
+        shuffle=True, max_queue_size=max_queue_size, workers=INPUT_WORKERS,
         callbacks=callbacks)
 
 

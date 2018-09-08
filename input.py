@@ -64,13 +64,13 @@ class Dataset(object):
                 weight[np.where(mask<=0.5)] = weight_bg
 
             if adjust == 'resize':
-                x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
-                mask = resize(mask, (128, 128, 1), mode='constant', preserve_range=True)
-                weight = resize(weight, (128, 128, 1), mode='constant', preserve_range=True)
+                x = resize(x, (IM_HEIGHT, IM_WIDTH, 1), mode='constant', preserve_range=True)
+                mask = resize(mask, (IM_HEIGHT, IM_WIDTH, 1), mode='constant', preserve_range=True)
+                weight = resize(weight, (IM_HEIGHT, IM_WIDTH, 1), mode='constant', preserve_range=True)
             if adjust == 'resize-cv':
-                x = np.reshape(cv2.resize(x, (128, 128), interpolation=cv2.INTER_LINEAR), (128, 128, 1))
-                mask = np.reshape(cv2.resize(mask, (128, 128), interpolation=cv2.INTER_NEAREST), (128, 128, 1))
-                weight = np.reshape(cv2.resize(weight, (128, 128), interpolation=cv2.INTER_NEAREST), (128, 128, 1))
+                x = np.reshape(cv2.resize(x, (IM_HEIGHT, IM_WIDTH), interpolation=cv2.INTER_LINEAR), (IM_HEIGHT, IM_WIDTH, 1))
+                mask = np.reshape(cv2.resize(mask, (IM_HEIGHT, IM_WIDTH), interpolation=cv2.INTER_NEAREST), (IM_HEIGHT, IM_WIDTH, 1))
+                weight = np.reshape(cv2.resize(weight, (IM_HEIGHT, IM_WIDTH), interpolation=cv2.INTER_NEAREST), (IM_HEIGHT, IM_WIDTH, 1))
             elif adjust == 'pad':
                 height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
                 width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
@@ -116,7 +116,7 @@ class Dataset(object):
             img = load_img(path + '/images/' + id_)
             x = img_to_array(img)[:, :, 1]
             if adjust == 'resize':
-                X_samples[n] = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
+                X_samples[n] = resize(x, (IM_HEIGHT, IM_WIDTH, 1), mode='constant', preserve_range=True)
             elif adjust == 'pad':
                 height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
                 width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
@@ -210,7 +210,7 @@ def input_test(path_test):
         path = path_test
         img = load_img(path + '/images/' + id_)
         x = img_to_array(img)[:, :, 1]
-        x = resize(x, (128, 128, 1), mode='constant', preserve_range=True)
+        x = resize(x, (IM_HEIGHT, IM_WIDTH, 1), mode='constant', preserve_range=True)
         X_test[n] = x
 
     print('Done!')

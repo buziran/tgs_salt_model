@@ -34,7 +34,7 @@ tf.flags.DEFINE_integer(
     'epochs_decay', 10, help="""decay epoch of learning rate""")
 
 tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'], help="""mode to adjust image 101=>128""")
+    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'], help="""mode to adjust image size""")
 
 tf.flags.DEFINE_float(
     'weight_fg', 1.0, """weight of foreground mask""")
