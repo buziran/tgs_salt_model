@@ -59,7 +59,8 @@ def train(dataset):
 
     checkpointer = ModelCheckpoint(path_model, monitor='val_weighted_mean_score', verbose=1, save_best_only=True, mode='max')
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)
-    lrscheduler = LearningRateScheduler(StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay), verbose=1)
+    lrscheduler = LearningRateScheduler(
+        StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay, FLAGS.freeze_once), verbose=1)
 
     callbacks = [checkpointer, tensorboarder, lrscheduler]
     if FLAGS.early_stopping:

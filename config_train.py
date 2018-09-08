@@ -15,11 +15,16 @@ tf.flags.DEFINE_integer(
 tf.flags.DEFINE_bool(
     'early_stopping', False, help="""whether to apply early-stopping""")
 
+tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
+
 tf.flags.DEFINE_float(
     'lr', 0.001, help="""initial value of learning rate""")
 
 tf.flags.DEFINE_float(
     'lr_decay', 1.0, help="""decay factor for learning rate""")
+
+tf.flags.DEFINE_bool(
+    'freeze_once', False, """whether to freeze learning rate once""")
 
 tf.flags.DEFINE_integer(
     'epochs_decay', 10, help="""decay epoch of learning rate""")
@@ -49,8 +54,6 @@ tf.flags.DEFINE_bool('use_ref', True, """whether to use reference model""")
 tf.flags.DEFINE_integer('depth', 5, """number of channel at UNet first layer""")
 
 tf.flags.DEFINE_integer('start_ch', 16, """number of channel at UNet first layer""")
-
-tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
 
 """Augmentations"""
 tf.flags.DEFINE_bool(

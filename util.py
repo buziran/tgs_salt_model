@@ -46,12 +46,15 @@ def RLenc(img, order='F', format=True):
 
 
 class StepDecay(object):
-    def __init__(self, lr, decay, epochs_decay=10):
+    def __init__(self, lr, decay, epochs_decay=10, freeze_once=False):
         self.lr = lr
         self.decay = decay
         self.epochs_decay = epochs_decay
+        self.freeze_once = freeze_once
 
     def __call__(self, epoch):
+       if self.freeze_once and epoch == 0:
+           return 0.0
        lr_cur = self.lr * math.pow(self.decay, math.floor((1+epoch)/self.epochs_decay))
        return lr_cur
 
