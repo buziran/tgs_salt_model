@@ -3,10 +3,71 @@
 
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
+from tensorflow.python.keras.backend import tile
 from tensorflow.python.keras.models import load_model as _load_model
+from tensorflow.keras.applications import inception_resnet_v2, densenet
+import resnet50
 
 from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy
 from util import get_metrics
+
+
+def conv_block_simple(input, filters, prefix, strides=(1, 1)):
+    conv = Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", strides=strides, name=prefix + "_conv")(input)
+    conv = BatchNormalization(name=prefix + "_bn")(conv)
+    conv = Activation('relu', name=prefix + "_activation")(conv)
+    return conv
+
+
+def get_unet_resnet50(input_shape):
+    inputs = Input(shape=input_shape)
+    if input_shape[2] == 1:
+        inputs = tile(inputs, [1, 1, 1, 3])
+        input_shape[2] = 3
+    base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
+
+    for i, layer in enumerate(base_model.layers):
+        layer.trainable = True
+
+    print(base_model.summary())
+    conv1 = base_model.get_layer("activation").output
+    conv2 = base_model.get_layer("activation_9").output
+    conv3 = base_model.get_layer("activation_21").output
+    conv4 = base_model.get_layer("activation_39").output
+    conv5 = base_model.get_layer("activation_48").output
+
+    up6 = concatenate([UpSampling2D()(conv5), conv4], axis=-1)
+    conv6 = conv_block_simple(up6, 256, "conv6_1")
+    conv6 = conv_block_simple(conv6, 256, "conv6_2")
+
+    up7 = concatenate([UpSampling2D()(conv6), conv3], axis=-1)
+    conv7 = conv_block_simple(up7, 192, "conv7_1")
+    conv7 = conv_block_simple(conv7, 192, "conv7_2")
+
+    up8 = concatenate([UpSampling2D()(conv7), conv2], axis=-1)
+    conv8 = conv_block_simple(up8, 128, "conv8_1")
+    conv8 = conv_block_simple(conv8, 128, "conv8_2")
+
+    up9 = concatenate([UpSampling2D()(conv8), conv1], axis=-1)
+    conv9 = conv_block_simple(up9, 64, "conv9_1")
+    conv9 = conv_block_simple(conv9, 64, "conv9_2")
+
+    return inputs, conv9
+
+
+def build_model_pretrained(height, width, channels, optimizer='adam', dice=False, encoder='resnet50',
+                           spatial_dropout=None):
+    if encoder == 'resnet50':
+        inputs, outputs = get_unet_resnet50([height, width, channels])
+    else:
+        raise ValueError('encoder {} is not supported'.format(encoder))
+
+    if spatial_dropout is not None:
+        outputs = SpatialDropout2D(spatial_dropout)(outputs)
+    outputs = Conv2D(1, (1, 1), activation='sigmoid', name='prediction')(outputs)
+    model = Model(inputs=[inputs], outputs=[outputs])
+    model = compile_model(model, optimizer, dice)
+    return model
 
 
 def build_model_ref(
@@ -135,6 +196,15 @@ def load_model(path_model, optimizer='adam', dice=False):
         loss = weighted_binary_crossentropy
 
     model = _load_model(path_model, compile=False)
+    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
+    return model
+
+
+def compile_model(model, optimizer='adam', dice=False):
+    if dice:
+        loss = weighted_bce_dice_loss
+    else:
+        loss = weighted_binary_crossentropy
     model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 

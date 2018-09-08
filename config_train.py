@@ -49,6 +49,12 @@ tf.flags.DEFINE_bool(
     'debug', False, "Run as debug mode")
 
 """Model"""
+tf.flags.DEFINE_enum(
+    'pretrained', None, enum_values=['resnet50', 'inception_resnet_v2', 'densenet121'],
+    help="""whether to use batch-normalization""")
+
+tf.flags.DEFINE_float('spatial_dropout', None, """factor of spatial dropout""")
+
 tf.flags.DEFINE_bool('batch_norm', True, """whether to use batch-normalization""")
 
 tf.flags.DEFINE_float('drop_out', 0.0, """whether to use drop-out""")
