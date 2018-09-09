@@ -44,10 +44,11 @@ def train(dataset):
     else:
         weight_adaptive = None
 
-    dataset_train, dataset_valid = dataset.gen_train_valid(
-        n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
-        weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
-        augment_dict=augment_dict())
+    with tf.device('/cpu:0'):
+        dataset_train, dataset_valid = dataset.gen_train_valid(
+            n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
+            weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
+            augment_dict=augment_dict())
 
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
