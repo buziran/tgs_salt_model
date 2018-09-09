@@ -21,15 +21,11 @@ def conv_block_simple(input, filters, prefix, strides=(1, 1)):
 
 def get_unet_resnet50(input_shape):
     inputs = Input(shape=input_shape)
-    if input_shape[2] == 1:
-        inputs = tile(inputs, [1, 1, 1, 3])
-        input_shape[2] = 3
     base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
 
     for i, layer in enumerate(base_model.layers):
         layer.trainable = True
 
-    print(base_model.summary())
     conv1 = base_model.get_layer("activation").output
     conv2 = base_model.get_layer("activation_9").output
     conv3 = base_model.get_layer("activation_21").output
@@ -52,7 +48,11 @@ def get_unet_resnet50(input_shape):
     conv9 = conv_block_simple(up9, 64, "conv9_1")
     conv9 = conv_block_simple(conv9, 64, "conv9_2")
 
-    return inputs, conv9
+    up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
+    conv10 = conv_block_simple(up10, 32, "conv10_1")
+    conv10 = conv_block_simple(conv10, 32, "conv10_2")
+
+    return inputs, conv10
 
 
 def build_model_pretrained(height, width, channels, optimizer='adam', dice=False, encoder='resnet50',
