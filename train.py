@@ -10,7 +10,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningR
 import tensorflow.keras.backend as K
 
 from model import build_model, build_model_ref, load_model, build_model_pretrained
-from input import Dataset
+from dataset import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard
 import config_train
@@ -28,6 +28,7 @@ def augment_dict():
         zoom_range=FLAGS.zoom_range,
         width_shift_range=FLAGS.shift_range,
         height_shift_range=FLAGS.shift_range,
+        random_erase=FLAGS.random_erase,
         fill_mode=FLAGS.fill_mode)
 
 
@@ -37,10 +38,25 @@ def train(dataset):
     with open(os.path.join(FLAGS.model, FLAGS_FILENAME), 'w') as f:
         json.dump(flag_values_dict, f, indent=4)
 
+    # FLAGS.weight_ad is parsed to [coverage_min, coverage_max], threshold to apply adaptive weight
+    if FLAGS.weight_ad is not None:
+        weight_adaptive = [float(x) for x in FLAGS.weight_ad]
+    else:
+        weight_adaptive = None
+
+    dataset_train, dataset_valid = dataset.gen_train_valid(
+        n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
+        weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
+        augment_dict=augment_dict())
+
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
             per_process_gpu_memory_fraction=0.9, allow_growth=True)))
     K.set_session(sess)
+
+    if FLAGS.debug:
+        debug_img_show(iter_train, iter_valid, sess)
+
     with tf.device('/gpu:0'):
         if FLAGS.restore is not None:
             path_restore = os.path.join(FLAGS.restore, NAME_MODEL)
@@ -71,44 +87,32 @@ def train(dataset):
     if FLAGS.early_stopping:
         callbacks += EarlyStopping(patience=5, verbose=1)
 
-    # FLAGS.weight_ad is parsed to [coverage_min, coverage_max], threshold to apply adaptive weight
-    if FLAGS.weight_ad is not None:
-        weight_adaptive = [float(x) for x in FLAGS.weight_ad]
-    else:
-        weight_adaptive = None
+    num_train, num_valid = dataset.len_train_valid(n_splits=N_SPLITS, idx_kfold=FLAGS.cv)
 
-    dataset.load_train(
-        adjust=FLAGS.adjust, weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive)
-    train_generator, valid_generator = dataset.create_train_generator(
-        n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
-        augment_dict=augment_dict(), random_erase=FLAGS.random_erase)
-
-    if FLAGS.debug:
-        debug_img_show(train_generator, valid_generator)
-
-    steps_per_epoch = int(dataset.num_train / FLAGS.batch_size)
-    validation_steps = int(dataset.num_valid / FLAGS.batch_size)
+    steps_per_epoch = int(num_train / FLAGS.batch_size)
+    validation_steps = int(num_valid / FLAGS.batch_size)
     max_queue_size = FLAGS.batch_size * 10
 
-    results = model.fit_generator(
-        generator=train_generator, validation_data=valid_generator,
+    results = model.fit(
+        x=dataset_train, validation_data=dataset_valid,
         epochs=FLAGS.epochs, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps,
-        shuffle=True, max_queue_size=max_queue_size, workers=INPUT_WORKERS,
-        callbacks=callbacks)
+        shuffle=True, callbacks=callbacks)
 
 
-def debug_img_show(train_generator, valid_generator):
+def debug_img_show(iter_train, iter_valid, sess):
     import numpy as np
     import matplotlib.pyplot as plt
 
     def show_img_label_mask(images, labels_and_masks, prefix=""):
         num_img = images.shape[0]
         for i, (image, label_and_mask) in enumerate(zip(images, labels_and_masks)):
+            print(image.shape)
+            print(label_and_mask.shape)
             image = np.squeeze(image)
             label = label_and_mask[:,:,0]
             mask = label_and_mask[:,:,1]
             plt.title(prefix + "image {}/{}".format(i, num_img))
-            plt.imshow(image, cmap='gray', vmin=0, vmax=255)
+            plt.imshow(image, cmap='gray', vmin=0, vmax=1)
             plt.show()
 
             plt.title(prefix + "label {}/{}".format(i, num_img))
@@ -120,13 +124,11 @@ def debug_img_show(train_generator, valid_generator):
             plt.colorbar()
             plt.show()
 
-    for images, labels_and_masks in train_generator:
-        show_img_label_mask(images, labels_and_masks, prefix="training ")
-        break
+    images, labels_and_masks = sess.run(iter_train.get_next())
+    show_img_label_mask(images, labels_and_masks, prefix="training ")
 
-    for images, labels_and_masks in valid_generator:
-        show_img_label_mask(images, labels_and_masks, prefix="validation ")
-        break
+    images, labels_and_masks = sess.run(iter_valid.get_next())
+    show_img_label_mask(images, labels_and_masks, prefix="validing ")
 
 def main(argv=None):
     dataset = Dataset(FLAGS.input)
