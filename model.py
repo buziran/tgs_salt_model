@@ -55,10 +55,48 @@ def get_unet_resnet50(input_shape):
     return inputs, conv10
 
 
+def get_unet_densenet121(input_shape):
+    inputs = Input(shape=input_shape)
+    base_model = densenet.DenseNet121(
+        input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
+
+    for i, layer in enumerate(base_model.layers):
+        layer.trainable = True
+
+    conv1 = base_model.get_layer("conv1/relu").output
+    conv2 = base_model.get_layer("pool2_conv").output
+    conv3 = base_model.get_layer("pool3_conv").output
+    conv4 = base_model.get_layer("pool4_conv").output
+    conv5 = base_model.get_layer("bn").output
+
+    up6 = concatenate([UpSampling2D()(conv5), conv4], axis=-1)
+    conv6 = conv_block_simple(up6, 256, "conv6_1")
+    conv6 = conv_block_simple(conv6, 256, "conv6_2")
+
+    up7 = concatenate([UpSampling2D()(conv6), conv3], axis=-1)
+    conv7 = conv_block_simple(up7, 192, "conv7_1")
+    conv7 = conv_block_simple(conv7, 192, "conv7_2")
+
+    up8 = concatenate([UpSampling2D()(conv7), conv2], axis=-1)
+    conv8 = conv_block_simple(up8, 128, "conv8_1")
+    conv8 = conv_block_simple(conv8, 128, "conv8_2")
+
+    up9 = concatenate([UpSampling2D()(conv8), conv1], axis=-1)
+    conv9 = conv_block_simple(up9, 64, "conv9_1")
+    conv9 = conv_block_simple(conv9, 64, "conv9_2")
+
+    up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
+    conv10 = conv_block_simple(up10, 32, "conv10_1")
+    conv10 = conv_block_simple(conv10, 32, "conv10_2")
+
+    return inputs, conv10
+
 def build_model_pretrained(height, width, channels, optimizer='adam', dice=False, encoder='resnet50',
                            spatial_dropout=None):
     if encoder == 'resnet50':
         inputs, outputs = get_unet_resnet50([height, width, channels])
+    elif encoder == 'densenet121':
+        inputs, outputs = get_unet_densenet121([height, width, channels])
     else:
         raise ValueError('encoder {} is not supported'.format(encoder))
 
