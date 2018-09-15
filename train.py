@@ -45,7 +45,7 @@ def train(dataset):
         weight_adaptive = None
 
     with tf.device('/cpu:0'):
-        dataset_train, dataset_valid = dataset.gen_train_valid(
+        iter_train, iter_valid = dataset.gen_train_valid(
             n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
             weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
             augment_dict=augment_dict())
@@ -94,7 +94,7 @@ def train(dataset):
     max_queue_size = FLAGS.batch_size * 10
 
     results = model.fit(
-        x=dataset_train, validation_data=dataset_valid,
+        x=iter_train, validation_data=iter_valid,
         epochs=FLAGS.epochs, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps,
         shuffle=True, callbacks=callbacks)
 
@@ -106,13 +106,14 @@ def debug_img_show(iter_train, iter_valid, sess):
     def show_img_label_mask(images, labels_and_masks, prefix=""):
         num_img = images.shape[0]
         for i, (image, label_and_mask) in enumerate(zip(images, labels_and_masks)):
-            print(image.shape)
-            print(label_and_mask.shape)
+            print("image.shape is {}".format(image.shape))
+            print("label_and_mask.shape is {}".format(label_and_mask.shape))
             image = np.squeeze(image)
             label = label_and_mask[:,:,0]
             mask = label_and_mask[:,:,1]
             plt.title(prefix + "image {}/{}".format(i, num_img))
             plt.imshow(image, cmap='gray', vmin=0, vmax=1)
+            plt.colorbar()
             plt.show()
 
             plt.title(prefix + "label {}/{}".format(i, num_img))

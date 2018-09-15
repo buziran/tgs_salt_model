@@ -81,12 +81,12 @@ class Dataset(object):
         dataset_train  = tf.data.Dataset.zip((dataset_train_x, dataset_train_y))
         dataset_valid  = tf.data.Dataset.zip((dataset_valid_x, dataset_valid_y))
 
-        def _load_normalize(path_mask, path_image):
+        def _load_normalize(path_image, path_mask):
             image = load_img(path_image, channels=IM_CHAN)
             mask = load_img(path_mask, channels=1)
-            return normalize(mask), normalize(image)
+            return normalize(image), normalize(mask)
 
-        def _create_weight(mask, image):
+        def _create_weight(image, mask):
             weight = tf.ones_like(mask, dtype=tf.float32)
             if weight_fg == 1.0 and weight_bg == 1.0 and weight_adaptive is None:
                 pass
@@ -96,7 +96,7 @@ class Dataset(object):
                 weight = tf.where(mask > 0.5, fg, bg)
             elif weight_adaptive is not None:
                 raise NotImplementedError()
-            return mask, image, weight
+            return image, mask, weight
 
         def _adjust(image, mask, weight):
             if adjust == 'resize':
@@ -107,7 +107,7 @@ class Dataset(object):
                 image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
                 mask = pad(mask, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
                 weight = pad(weight, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
-            return mask, image, weight
+            return image, mask, weight
 
         def _rand_flip(image, flip_fn, p):
             return tf.cond(p>0.5, true_fn=lambda: flip_fn(image), false_fn=lambda: image)
@@ -117,13 +117,13 @@ class Dataset(object):
                 return image, mask, weight
             if augment_dict['horizontal_flip']:
                 p = tf.random_uniform(())
-                mask = _rand_flip(mask, tf.image.flip_left_right, p)
                 image = _rand_flip(image, tf.image.flip_left_right, p)
+                mask = _rand_flip(mask, tf.image.flip_left_right, p)
                 weight = _rand_flip(weight, tf.image.flip_left_right, p)
             if augment_dict['vertical_flip']:
                 p = tf.random_uniform(())
-                mask = _rand_flip(mask, tf.image.flip_up_down, p)
                 image = _rand_flip(image, tf.image.flip_up_down, p)
+                mask = _rand_flip(mask, tf.image.flip_up_down, p)
                 weight = _rand_flip(weight, tf.image.flip_up_down, p)
             if augment_dict['zoom_range'] is not None:
                 zoom_range = augment_dict['zoom_range']
@@ -155,8 +155,11 @@ class Dataset(object):
         dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls=4)
         dataset_valid = dataset_valid.map(_adjust, num_parallel_calls=4)
         dataset_valid = dataset_valid.map(_concat_mask_weight)
-        dataset_valid = dataset_valid.repeat(1)
+        dataset_valid = dataset_valid.repeat()
         dataset_valid = dataset_valid.batch(batch_size)
-        return dataset_train, dataset_valid
+
+        iter_train = dataset_train.make_one_shot_iterator()
+        iter_valid = dataset_valid.make_one_shot_iterator()
+        return iter_train, iter_valid
 
 
