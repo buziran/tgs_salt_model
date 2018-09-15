@@ -87,7 +87,7 @@ class Dataset(object):
             return normalize(mask), normalize(image)
 
         def _create_weight(mask, image):
-            weight = tf.ones_like(image, dtype=tf.float32)
+            weight = tf.ones_like(mask, dtype=tf.float32)
             if weight_fg == 1.0 and weight_bg == 1.0 and weight_adaptive is None:
                 pass
             elif weight_adaptive is None:
@@ -140,7 +140,6 @@ class Dataset(object):
 
         def _concat_mask_weight(image, mask, weight):
             mask_and_weight = tf.concat((mask, weight), axis=2)
-            print(image, mask_and_weight)
             return image, mask_and_weight
 
         dataset_train = dataset_train.shuffle(batch_size*10)

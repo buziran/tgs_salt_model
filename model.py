@@ -5,8 +5,9 @@ from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 from tensorflow.python.keras.backend import tile
 from tensorflow.python.keras.models import load_model as _load_model
-from tensorflow.keras.applications import inception_resnet_v2, densenet
+from tensorflow.keras.applications import inception_resnet_v2
 import resnet50
+import densenet
 
 from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy
 from util import get_metrics

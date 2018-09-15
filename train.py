@@ -74,8 +74,7 @@ def train(dataset):
             model = build_model_ref(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice,
                 depth=FLAGS.depth, start_ch=FLAGS.start_ch, optimizer=FLAGS.opt)
-
-    print(model.summary())
+        model.summary()
 
     path_model = os.path.join(FLAGS.model, NAME_MODEL)
 

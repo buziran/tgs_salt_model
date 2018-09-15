@@ -194,7 +194,7 @@ def DenseNet(blocks,
   input_shape = _obtain_input_shape(
       input_shape,
       default_size=224,
-      min_size=221,
+      min_size=128,
       data_format=K.image_data_format(),
       require_flatten=include_top,
       weights=weights)
