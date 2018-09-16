@@ -122,6 +122,59 @@ class Dataset(object):
             image = tf.random_crop(image, size=(orig_height, orig_width, orig_channels), seed=seed)
             return image
 
+        def _rand_erase(
+                image, mask, weight, range_image, range_mask, range_weight,
+                probability=0.5, min_size=0.02, max_size=0.4,
+                min_aspect_ratio=0.3, max_aspect_ratio=1/0.3, min_val=0, max_val=1, pixel_wise=False, seed=None):
+            # Generate seed for reproductivity
+            if seed is not None:
+                np.random.seed(seed)
+                seeds = np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max, size=[5])
+                seed_size, seed_ratio, seed_left, seed_top, seed_prob = seeds
+            else:
+                seed_size, seed_ratio, seed_left, seed_top, seed_prob = [None] * 5
+            height, width, channels = image.get_shape().as_list()
+            num_elems = tf.cast(height, dtype=tf.float32) * tf.cast(width, dtype=tf.float32)
+            s = tf.random_uniform((), min_size, max_size, seed=seed_size) * num_elems
+            log_min_asp = tf.log(min_aspect_ratio)
+            log_max_asp = tf.log(max_aspect_ratio)
+            r = tf.exp(tf.random_uniform((), log_min_asp, log_max_asp, seed=seed_ratio))
+            w = tf.cast(tf.sqrt(s / r), dtype=tf.int32)
+            h = tf.cast(tf.sqrt(s * r), dtype=tf.int32)
+            w = tf.reduce_min([width, w])
+            h = tf.reduce_min([height, h])
+            left = tf.cond(tf.equal(w, width),
+                lambda:0,
+                lambda:tf.random_uniform((), 0, width-w, seed=seed_left, dtype=tf.int32))
+            top = tf.cond(tf.equal(h, height),
+                lambda:0,
+                lambda:tf.random_uniform((), 0, height-h, seed=seed_top, dtype=tf.int32))
+
+            erased_image = _rand_bbox(image, h, w, top, left, min_val=range_image[0], max_val=range_image[1],
+                                      pixel_wise=pixel_wise)
+            erased_mask = _rand_bbox(mask, h, w, top, left, min_val=range_mask[0], max_val=range_mask[1],
+                                     pixel_wise=False)
+            erased_weight = _rand_bbox(weight, h, w, top, left, min_val=range_weight[0], max_val=range_weight[1],
+                                       pixel_wise=False)
+
+            prob = tf.random_uniform((), seed=seed_prob)
+            image = tf.cond(tf.less(prob, probability), true_fn=lambda:erased_image, false_fn=lambda:image)
+            mask = tf.cond(tf.less(prob, probability), true_fn=lambda:erased_mask, false_fn=lambda:mask)
+            weight = tf.cond(tf.less(prob, probability), true_fn=lambda:erased_weight, false_fn=lambda:weight)
+            return image, mask, weight
+
+        def _rand_bbox(image, height, width, top, left, min_val, max_val, pixel_wise):
+            im_height, im_width, im_ch = image.get_shape().as_list()
+            paddings = ([[top, im_height-top-height], [left, im_width-left-width], [0, 0]])
+            randomize_mask = tf.pad(tf.ones(shape=(height, width, im_ch), dtype=tf.bool), paddings=paddings)
+            if pixel_wise:
+                values = tf.random_uniform((height, width, im_ch), min_val, max_val, dtype=image.dtype)
+            else:
+                _val = tf.random_uniform((), min_val, max_val, dtype=image.dtype)
+                values = tf.fill(dims=(im_height, im_width, im_ch), value=_val)
+            randomized = tf.where(randomize_mask, values, image)
+            return randomized
+
         def _augment(image, mask, weight):
             if augment_dict is None:
                 return image, mask, weight
@@ -153,6 +206,15 @@ class Dataset(object):
                     mask, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
                 weight = _rand_shift(
                     weight, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
+            if augment_dict['random_erase'] is not None:
+                if augment_dict['random_erase'] == 'constant':
+                    pixel_wise = False
+                elif augment_dict['random_erase'] == 'pixel':
+                    pixel_wise = True
+                else:
+                    raise NotImplementedError()
+                image, mask, weight = _rand_erase(image, mask, weight,
+                                   range_image=(0, 1), range_mask=(0, 0), range_weight=(0, 0), pixel_wise=pixel_wise, probability=1)
             return image, mask, weight
 
         def _concat_mask_weight(image, mask, weight):
@@ -160,17 +222,17 @@ class Dataset(object):
             return image, mask_and_weight
 
         dataset_train = dataset_train.shuffle(batch_size*10)
-        dataset_train = dataset_train.map(_load_normalize, num_parallel_calls=4)
-        dataset_train = dataset_train.map(_create_weight, num_parallel_calls=4)
-        dataset_train = dataset_train.map(_adjust, num_parallel_calls=5)
-        dataset_train = dataset_train.map(_augment, num_parallel_calls=4)
+        dataset_train = dataset_train.map(_load_normalize, num_parallel_calls=8)
+        dataset_train = dataset_train.map(_create_weight, num_parallel_calls=8)
+        dataset_train = dataset_train.map(_adjust, num_parallel_calls=8)
+        dataset_train = dataset_train.map(_augment, num_parallel_calls=8)
         dataset_train = dataset_train.map(_concat_mask_weight)
         dataset_train = dataset_train.repeat()
         dataset_train = dataset_train.batch(batch_size)
 
-        dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls=4)
-        dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls=4)
-        dataset_valid = dataset_valid.map(_adjust, num_parallel_calls=4)
+        dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls=8)
+        dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls=8)
+        dataset_valid = dataset_valid.map(_adjust, num_parallel_calls=8)
         dataset_valid = dataset_valid.map(_concat_mask_weight)
         dataset_valid = dataset_valid.repeat()
         dataset_valid = dataset_valid.batch(batch_size)
