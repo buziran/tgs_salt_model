@@ -28,10 +28,10 @@ def resize(image, target_shape, method=tf.image.ResizeMethod.BILINEAR):
 
 def pad(image, target_shape, mode='CONSTANT', constant_values=0):
     target_height, target_width = target_shape
-    height, width, channels = tf.shape(image)
-    top = (target_height - height) / 2
+    height, width, channels = image.get_shape()
+    top = tf.cast((target_height - height) / 2, tf.int32)
     bottom = target_height - height - top
-    left = (target_width - width) / 2
+    left = tf.cast((target_width - width) / 2, tf.int32)
     right = target_width - width - left
     image = tf.pad(image, mode=mode, paddings=[[top, bottom], [left, right], [0, 0]])
     return image
@@ -112,6 +112,16 @@ class Dataset(object):
         def _rand_flip(image, flip_fn, p):
             return tf.cond(p>0.5, true_fn=lambda: flip_fn(image), false_fn=lambda: image)
 
+        def _rand_shift(image, height_shift_range, width_shift_range, seed=None):
+            orig_height, orig_width, orig_channels = image.get_shape()
+            height_shift_range = height_shift_range if height_shift_range is not None else 0.0
+            width_shift_range = width_shift_range if width_shift_range is not None else 0.0
+            target_height = tf.cast(IM_HEIGHT * (1+height_shift_range), dtype=tf.int32)
+            target_width = tf.cast(IM_WIDTH * (1+width_shift_range), dtype=tf.int32)
+            image = pad(image, target_shape=(target_height, target_width), mode='CONSTANT')
+            image = tf.random_crop(image, size=(orig_height, orig_width, orig_channels), seed=seed)
+            return image
+
         def _augment(image, mask, weight):
             if augment_dict is None:
                 return image, mask, weight
@@ -136,6 +146,13 @@ class Dataset(object):
                 image = tf.image.resize_image_with_crop_or_pad(image, IM_HEIGHT, IM_WIDTH)
                 mask = tf.image.resize_image_with_crop_or_pad(mask, IM_HEIGHT, IM_WIDTH)
                 weight = tf.image.resize_image_with_crop_or_pad(weight, IM_HEIGHT, IM_WIDTH)
+            if augment_dict['height_shift_range'] is not None or augment_dict['width_shift_range'] is not None:
+                image = _rand_shift(
+                    image, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
+                mask = _rand_shift(
+                    mask, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
+                weight = _rand_shift(
+                    weight, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
             return image, mask, weight
 
         def _concat_mask_weight(image, mask, weight):
