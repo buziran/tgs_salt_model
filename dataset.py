@@ -66,7 +66,7 @@ class Dataset(object):
 
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
-                        batch_size=32, augment_dict=None):
+                        batch_size=32, augment_dict=None, repeat=None):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
 
         paths_train_x = [os.path.join(self.path_input, 'images', idx) for idx in id_train]
@@ -227,14 +227,14 @@ class Dataset(object):
         dataset_train = dataset_train.map(_adjust, num_parallel_calls=8)
         dataset_train = dataset_train.map(_augment, num_parallel_calls=8)
         dataset_train = dataset_train.map(_concat_mask_weight)
-        dataset_train = dataset_train.repeat()
+        dataset_train = dataset_train.repeat(repeat)
         dataset_train = dataset_train.batch(batch_size)
 
         dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls=8)
         dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls=8)
         dataset_valid = dataset_valid.map(_adjust, num_parallel_calls=8)
         dataset_valid = dataset_valid.map(_concat_mask_weight)
-        dataset_valid = dataset_valid.repeat()
+        dataset_valid = dataset_valid.repeat(repeat)
         dataset_valid = dataset_valid.batch(batch_size)
 
         iter_train = dataset_train.make_one_shot_iterator()

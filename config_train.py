@@ -9,9 +9,6 @@ tf.flags.DEFINE_string(
 tf.flags.DEFINE_integer(
     'epochs', 300, """path to log directory""")
 
-tf.flags.DEFINE_integer(
-    'batch_size', 32, """batch size""")
-
 tf.flags.DEFINE_bool(
     'early_stopping', False, help="""whether to apply early-stopping""")
 
@@ -32,9 +29,6 @@ tf.flags.DEFINE_bool(
 
 tf.flags.DEFINE_integer(
     'epochs_decay', 10, help="""decay epoch of learning rate""")
-
-tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'], help="""mode to adjust image size""")
 
 tf.flags.DEFINE_float(
     'weight_fg', 1.0, """weight of foreground mask""")

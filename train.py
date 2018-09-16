@@ -46,7 +46,7 @@ def train(dataset):
 
     with tf.device('/cpu:0'):
         iter_train, iter_valid = dataset.gen_train_valid(
-            n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size,
+            n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, adjust=FLAGS.adjust,
             weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
             augment_dict=augment_dict())
 
