@@ -12,7 +12,7 @@ from scipy.misc import imsave
 from skimage.transform import resize
 from skimage.util import crop
 
-from input import Dataset
+from dataset import Dataset
 from metrics import mean_iou, mean_score
 from constant import *
 from util import get_metrics, get_custom_objects
@@ -78,8 +78,7 @@ def main(argv=None):
     tf.gfile.MakeDirs(FLAGS.prediction)
 
     dataset = Dataset(FLAGS.input)
-    dataset.load_test(adjust=FLAGS.adjust)
-    sample_generator = dataset.create_test_generator(batch_size=FLAGS.batch_size, shuffle=False, with_id=True)
+    iter_test  = dataset.gen_test(batch_size=FLAGS.batch_size, adjust=FLAGS.adjust)
 
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
@@ -90,8 +89,11 @@ def main(argv=None):
     model = load_model(path_model, compile=False)
     model.compile(optimizer="adam", loss='binary_crossentropy')
 
-    num_batch = np.ceil(dataset.num_samples / FLAGS.batch_size)
-    for id_batch, (xs, ids) in enumerate(tqdm(sample_generator, total=num_batch)):
+    num_batch = int(np.ceil(len(dataset) / FLAGS.batch_size))
+    sample_tensor = iter_test.get_next()
+    for id_batch in tqdm(range(num_batch)):
+        xs, paths = sess.run(sample_tensor)
+        ids = np.asarray([os.path.split(path)[1].decode() for path in paths])
 
         if id_batch == num_batch:
             break

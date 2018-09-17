@@ -48,7 +48,6 @@ def eval(dataset):
             else:
                 loss = weighted_binary_crossentropy
             model.compile(optimizer="adam", loss=loss, metrics=get_metrics())
-            model.summary()
 
             steps_train = int(np.ceil(num_train / FLAGS.batch_size))
             steps_valid = int(np.ceil(num_valid / FLAGS.batch_size))
