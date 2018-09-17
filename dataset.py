@@ -214,7 +214,7 @@ class Dataset(object):
                 else:
                     raise NotImplementedError()
                 image, mask, weight = _rand_erase(image, mask, weight,
-                                   range_image=(0, 1), range_mask=(0, 0), range_weight=(0, 0), pixel_wise=pixel_wise, probability=1)
+                                   range_image=(0, 1), range_mask=(0, 0), range_weight=(0, 0), pixel_wise=pixel_wise)
             return image, mask, weight
 
         def _concat_mask_weight(image, mask, weight):
