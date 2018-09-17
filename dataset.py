@@ -64,6 +64,43 @@ class Dataset(object):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
         return len(id_train), len(id_valid)
 
+    def gen_test(self, adjust='resize', batch_size=32, repeat=1, with_path=True):
+
+        paths_test_x = [os.path.join(self.path_input, 'images', idx) for idx in self.id_samples]
+
+        dataset_test = tf.data.Dataset.from_tensor_slices(paths_test_x)
+
+        if with_path:
+            def _load_normalize(path_image):
+                image = load_img(path_image, channels=IM_CHAN)
+                return normalize(image), path_image
+
+            def _adjust(image, path_image):
+                if adjust == 'resize':
+                    image = resize(image, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
+                elif adjust == 'pad':
+                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+                return image, path_image
+        else:
+            def _load_normalize(path_image):
+                image = load_img(path_image, channels=IM_CHAN)
+                return normalize(image)
+
+            def _adjust(image):
+                if adjust == 'resize':
+                    image = resize(image, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
+                elif adjust == 'pad':
+                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+                return image
+
+        dataset_test = dataset_test.map(_load_normalize, num_parallel_calls=8)
+        dataset_test = dataset_test.map(_adjust, num_parallel_calls=8)
+        dataset_test = dataset_test.repeat(repeat)
+        dataset_test = dataset_test.batch(batch_size)
+
+        iter_test = dataset_test.make_one_shot_iterator()
+        return iter_test
+
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
                         batch_size=32, augment_dict=None, repeat=None):
