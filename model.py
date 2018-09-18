@@ -9,7 +9,7 @@ from tensorflow.keras.applications import inception_resnet_v2
 import resnet50
 import densenet
 
-from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy
+from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy, l2_loss
 from util import get_metrics
 
 
@@ -92,7 +92,7 @@ def get_unet_densenet121(input_shape):
 
     return inputs, conv10
 
-def build_model_pretrained(height, width, channels, optimizer='adam', dice=False, encoder='resnet50',
+def build_model_pretrained(height, width, channels, encoder='resnet50',
                            spatial_dropout=None):
     if encoder == 'resnet50':
         inputs, outputs = get_unet_resnet50([height, width, channels])
@@ -105,12 +105,11 @@ def build_model_pretrained(height, width, channels, optimizer='adam', dice=False
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
     outputs = Conv2D(1, (1, 1), activation='sigmoid', name='prediction')(outputs)
     model = Model(inputs=[inputs], outputs=[outputs])
-    model = compile_model(model, optimizer, dice)
     return model
 
 
 def build_model_ref(
-        height, width, channels, optimizer='adam', dice=False, out_ch=1, start_ch=16, depth=5, inc_rate=2,
+        height, width, channels, out_ch=1, start_ch=16, depth=5, inc_rate=2,
         activation='relu', drop_out=0.5, batch_norm=True, maxpool=True, upconv=True, residual=False):
     """Copy from https://www.kaggle.com/dingli/seismic-data-analysis-with-u-net"""
 
@@ -149,16 +148,11 @@ def build_model_ref(
 
     img_shape = [height, width, channels]
     model = UNet(img_shape, out_ch, start_ch, depth, inc_rate, activation, drop_out, batch_norm, maxpool, upconv, residual)
-    if dice:
-        loss = weighted_bce_dice_loss
-    else:
-        loss = weighted_binary_crossentropy
 
-    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 
 
-def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimizer='adam', dice=False):
+def build_model(height, width, channels, batch_norm=False, drop_out=0.0):
     inputs = Input((height, width, channels))
     s = Lambda(lambda x: x / 255)(inputs)
 
@@ -219,12 +213,7 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0, optimiz
     outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
-    if dice:
-        loss = weighted_bce_dice_loss
-    else:
-        loss = weighted_binary_crossentropy
 
-    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 
 
@@ -239,11 +228,16 @@ def load_model(path_model, optimizer='adam', dice=False):
     return model
 
 
-def compile_model(model, optimizer='adam', dice=False):
+def compile_model(model, optimizer='adam', dice=False, weight_decay=0.0, exclude_bn=True):
     if dice:
-        loss = weighted_bce_dice_loss
+        _loss = weighted_bce_dice_loss
     else:
-        loss = weighted_binary_crossentropy
+        _loss = weighted_binary_crossentropy
+    if weight_decay != 0.0:
+        _l2_loss = l2_loss(weight_decay, exclude_bn)
+        loss = lambda true, pred: _loss(true, pred) + _l2_loss
+    else:
+        loss = _loss
     model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 

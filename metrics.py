@@ -93,6 +93,7 @@ def weighted_bce_dice_loss(y_true_and_weight, y_pred):
     mask = tf.greater(weight, 1)
     wbce = weighted_binary_crossentropy(y_true_and_weight, y_pred)
     dloss = dice_loss(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
+
     return wbce + dloss
 
 
@@ -126,3 +127,20 @@ def mean_score_per_image(y_true, y_pred):
 def split_label_weight(label_and_weight):
     label, weight = tf.split(label_and_weight, [1, 1], axis=3)
     return label, weight
+
+def l2_loss(weight_decay, exclude_bn):
+    if exclude_bn:
+        def _filter(name):
+            return 'batch_normalization' not in name
+    else:
+        def _filter(name):
+            return True
+    loss_filter_fn = _filter
+
+    with tf.name_scope("l2_loss"):
+        _l2_loss = weight_decay * tf.add_n(
+            [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
+             if loss_filter_fn(v.name)])
+    tf.summary.scalar('l2_loss', _l2_loss)
+    return _l2_loss
+

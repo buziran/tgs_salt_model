@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
 import tensorflow.keras.backend as K
 
-from model import build_model, build_model_ref, load_model, build_model_pretrained
+from model import build_model, build_model_ref, load_model, build_model_pretrained, compile_model
 from dataset import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard
@@ -64,16 +64,18 @@ def train(dataset):
             model = load_model(path_restore, dice=FLAGS.dice, optimizer=FLAGS.opt)
         elif FLAGS.pretrained is not None:
             model = build_model_pretrained(
-                IM_HEIGHT, IM_WIDTH, IM_CHAN, dice=FLAGS.dice, optimizer=FLAGS.opt, encoder=FLAGS.pretrained,
+                IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
                 spatial_dropout=FLAGS.spatial_dropout)
         elif not FLAGS.use_ref:
             model = build_model(
-                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice,
-                optimizer=FLAGS.opt)
+                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)
         else:
             model = build_model_ref(
-                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out, dice=FLAGS.dice,
-                depth=FLAGS.depth, start_ch=FLAGS.start_ch, optimizer=FLAGS.opt)
+                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out,
+                depth=FLAGS.depth, start_ch=FLAGS.start_ch)
+
+        model = compile_model(model, optimizer=FLAGS.opt, dice=FLAGS.dice,
+                              weight_decay=FLAGS.weight_decay, exclude_bn=FLAGS.exclude_bn)
         model.summary()
 
     path_model = os.path.join(FLAGS.model, NAME_MODEL)

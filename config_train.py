@@ -24,6 +24,12 @@ tf.flags.DEFINE_float(
 tf.flags.DEFINE_float(
     'lr_decay', 1.0, help="""decay factor for learning rate""")
 
+tf.flags.DEFINE_float(
+    'weight_decay', 0.0, help="""weight decay""")
+
+tf.flags.DEFINE_bool(
+    'exclude_bn', True, help="""exclude parameter of batch normalization from l2 loss""")
+
 tf.flags.DEFINE_bool(
     'freeze_once', False, """whether to freeze learning rate once""")
 
