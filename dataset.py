@@ -162,7 +162,7 @@ class Dataset(object):
         def _rand_erase(
                 image, mask, weight, range_image, range_mask, range_weight,
                 probability=0.5, min_size=0.02, max_size=0.4,
-                min_aspect_ratio=0.3, max_aspect_ratio=1/0.3, min_val=0, max_val=1, pixel_wise=False, seed=None):
+                min_aspect_ratio=0.3, max_aspect_ratio=1/0.3, pixel_wise=False, seed=None):
             # Generate seed for reproductivity
             if seed is not None:
                 np.random.seed(seed)
@@ -246,12 +246,17 @@ class Dataset(object):
             if augment_dict['random_erase'] is not None:
                 if augment_dict['random_erase'] == 'constant':
                     pixel_wise = False
+                    range_image = (0, 1)
+                elif augment_dict['random_erase'] == 'zero':
+                    pixel_wise = False
+                    range_image = (0, 0)
                 elif augment_dict['random_erase'] == 'pixel':
                     pixel_wise = True
+                    range_image = (0, 1)
                 else:
                     raise NotImplementedError()
                 image, mask, weight = _rand_erase(image, mask, weight,
-                                   range_image=(0, 1), range_mask=(0, 0), range_weight=(0, 0), pixel_wise=pixel_wise)
+                                   range_image=range_image, range_mask=(0, 0), range_weight=(0, 0), pixel_wise=pixel_wise)
             return image, mask, weight
 
         def _concat_mask_weight(image, mask, weight):
