@@ -29,6 +29,7 @@ def augment_dict():
         width_shift_range=FLAGS.shift_range,
         height_shift_range=FLAGS.shift_range,
         random_erase=FLAGS.random_erase,
+        mixup=FLAGS.mixup,
         fill_mode=FLAGS.fill_mode)
 
 

@@ -212,6 +212,15 @@ class Dataset(object):
             randomized = tf.where(randomize_mask, values, image)
             return randomized
 
+        def _mixup(images, masks):
+            alpha = augment_dict['mixup']
+            dist_beta = tf.distributions.Beta(alpha, alpha)
+            lam = dist_beta.sample((1,1,1,1))
+            mixup_factor = tf.concat([lam, 1-lam], axis=0)
+            image = tf.reduce_sum(images * mixup_factor, axis=0, keepdims=False)
+            mask = tf.reduce_sum(masks * mixup_factor, axis=0, keepdims=False)
+            return image, mask
+
         def _augment(image, mask, weight):
             if augment_dict is None:
                 return image, mask, weight
@@ -265,6 +274,11 @@ class Dataset(object):
 
         dataset_train = dataset_train.shuffle(batch_size*10)
         dataset_train = dataset_train.map(_load_normalize, num_parallel_calls=8)
+
+        if augment_dict['mixup'] is not None:
+            dataset_train = dataset_train.batch(2)
+            dataset_train = dataset_train.map(_mixup, num_parallel_calls=8)
+
         dataset_train = dataset_train.map(_create_weight, num_parallel_calls=8)
         dataset_train = dataset_train.map(_adjust, num_parallel_calls=8)
         dataset_train = dataset_train.map(_augment, num_parallel_calls=8)
