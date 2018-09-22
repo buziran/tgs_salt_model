@@ -290,7 +290,7 @@ class Dataset(object):
         dataset_train = dataset_train.shuffle(batch_size*10)
         dataset_train = dataset_train.map(_load_normalize, num_parallel_calls=8)
 
-        if augment_dict['mixup'] is not None:
+        if augment_dict is not None and augment_dict['mixup'] is not None:
             dataset_train = dataset_train.batch(2)
             dataset_train = dataset_train.map(_mixup, num_parallel_calls=8)
 
