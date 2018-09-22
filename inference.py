@@ -40,6 +40,9 @@ tf.flags.DEFINE_enum(
     'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'],
     help="""mode to adjust image size""")
 
+tf.flags.DEFINE_float(
+    'threshold', 0.5, """threshold of confidence to predict foreground""")
+
 FLAGS = tf.flags.FLAGS
 
 
@@ -82,7 +85,7 @@ def main(argv=None):
             preds_test_upsampled.append(pred)
 
     # 四捨五入している
-    pred_dict = {fn[:-4]: RLenc(np.round(preds_test_upsampled[i])) for i, fn in tqdm_notebook(enumerate(test_ids))}
+    pred_dict = {fn[:-4]: RLenc((preds_test_upsampled[i] > FLAGS.threshold).astype(np.float)) for i, fn in tqdm_notebook(enumerate(test_ids))}
 
     sub = pd.DataFrame.from_dict(pred_dict, orient='index')
     sub.index.names = ['id']

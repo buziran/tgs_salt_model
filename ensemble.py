@@ -19,6 +19,7 @@ flags.DEFINE_string('input', '../input/test', """path to test data""")
 flags.DEFINE_string('submission', '../output/submission', """prefix of submission file""")
 flags.DEFINE_string('model', '../output/model', """path to model root directory""")
 flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
+flags.DEFINE_float('threshold', 0.5, """threshold of confidence to predict foreground""")
 
 
 FLAGS = flags.FLAGS
@@ -91,7 +92,7 @@ def ensemble_pred(path_preds, output_file, fn, img_dir=None):
         preds = np.stack(preds, axis=2).astype(np.float)
         ensembled = fn(preds, axis=2)
 
-        pred_dict.update({pred_file[:-4]: RLenc(np.round(ensembled))})
+        pred_dict.update({pred_file[:-4]: RLenc((ensembled > FLAGS.threshold).astype(np.float))})
 
         if img_dir is not None:
             y_pred = np.clip(ensembled * 255, 0, 255).astype(np.uint8)
