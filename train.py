@@ -93,7 +93,6 @@ def train(dataset):
 
     steps_per_epoch = int(num_train / FLAGS.batch_size)
     validation_steps = int(num_valid / FLAGS.batch_size)
-    max_queue_size = FLAGS.batch_size * 10
 
     results = model.fit(
         x=iter_train, validation_data=iter_valid,
@@ -120,6 +119,7 @@ def debug_img_show(iter_train, iter_valid, sess):
 
             plt.title(prefix + "label {}/{}".format(i, num_img))
             plt.imshow(label, cmap='gray', vmin=0, vmax=1)
+            plt.colorbar()
             plt.show()
 
             plt.title(prefix + "mask {}/{}".format(i, num_img))

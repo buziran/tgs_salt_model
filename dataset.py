@@ -271,6 +271,7 @@ class Dataset(object):
         dataset_train = dataset_train.map(_concat_mask_weight)
         dataset_train = dataset_train.repeat(repeat)
         dataset_train = dataset_train.batch(batch_size)
+        dataset_train = dataset_train.prefetch(1)
 
         dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls=8)
         dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls=8)
@@ -278,6 +279,7 @@ class Dataset(object):
         dataset_valid = dataset_valid.map(_concat_mask_weight)
         dataset_valid = dataset_valid.repeat(repeat)
         dataset_valid = dataset_valid.batch(batch_size)
+        dataset_valid = dataset_valid.prefetch(1)
 
         iter_train = dataset_train.make_one_shot_iterator()
         iter_valid = dataset_valid.make_one_shot_iterator()
