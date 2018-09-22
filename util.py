@@ -1,5 +1,6 @@
 import math
 
+import functools
 from tensorflow.python.keras.callbacks import TensorBoard
 import tensorflow.keras.backend as K
 import numpy as np
@@ -74,8 +75,13 @@ def load_npz(path_pred):
     return npzfile['arr_0']
 
 
-def get_metrics():
-    return [weighted_mean_iou, weighted_mean_score]
+def get_metrics(threshold=None):
+    if threshold is None:
+        return [weighted_mean_iou, weighted_mean_score]
+    else:
+        _weighted_mean_score = functools.partial(weighted_mean_score, threshold=threshold)
+        functools.update_wrapper(_weighted_mean_score, weighted_mean_score)
+        return [weighted_mean_iou, _weighted_mean_score]
 
 
 def get_custom_objects():

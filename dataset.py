@@ -310,8 +310,12 @@ class Dataset(object):
         dataset_valid = dataset_valid.batch(batch_size)
         dataset_valid = dataset_valid.prefetch(1)
 
-        iter_train = dataset_train.make_one_shot_iterator()
-        iter_valid = dataset_valid.make_one_shot_iterator()
+        if repeat is None:
+            iter_train = dataset_train.make_one_shot_iterator()
+            iter_valid = dataset_valid.make_one_shot_iterator()
+        else:
+            iter_train = dataset_train.make_initializable_iterator()
+            iter_valid = dataset_valid.make_initializable_iterator()
         return iter_train, iter_valid
 
 

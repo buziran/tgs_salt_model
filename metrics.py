@@ -23,7 +23,7 @@ def weighted_mean_iou(y_true_and_weight, y_pred):
     return mean_iou(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
 
 
-def mean_score(y_true, y_pred):
+def mean_score(y_true, y_pred, threshold=None):
     """
     Calculate mean score for batch images
 
@@ -32,7 +32,10 @@ def mean_score(y_true, y_pred):
     :return: 0-D Tensor of score
     """
     y_true_ = tf.cast(tf.round(y_true), tf.bool)
-    y_pred_ = tf.cast(tf.round(y_pred), tf.bool)
+    if threshold is None:
+        y_pred_ = tf.cast(tf.round(y_pred), tf.bool)
+    else:
+        y_pred_ = tf.greater(y_pred, threshold)
 
     # 画像ごとにflatten
     y_true_ = tf.reshape(y_true_, shape=[tf.shape(y_true_)[0], -1])
@@ -66,10 +69,10 @@ def mean_score(y_true, y_pred):
     return tf.reduce_mean(scores_per_image)
 
 
-def weighted_mean_score(y_true_and_weight, y_pred):
+def weighted_mean_score(y_true_and_weight, y_pred, threshold=None):
     y_true, weight = split_label_weight(y_true_and_weight)
     mask = tf.to_int32(tf.greater(weight, 0))
-    return mean_score(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
+    return mean_score(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype), threshold)
 
 
 def dice_loss(y_true, y_pred):
@@ -97,11 +100,14 @@ def weighted_bce_dice_loss(y_true_and_weight, y_pred):
     return wbce + dloss
 
 
-def mean_score_per_image(y_true, y_pred):
+def mean_score_per_image(y_true, y_pred, threshold=None):
     """Calculate score per image"""
     # GT, Predともに前景ゼロの場合はスコアを1とする
     y_true = np.round(y_true).astype(np.int)
-    y_pred = np.round(y_pred).astype(np.int)
+    if threshold is None:
+        y_pred = np.round(y_pred).astype(np.int)
+    else:
+        y_pred = (y_pred>threshold).astype(np.int)
 
     if np.any(y_true) == False and np.any(y_pred) == False:
         return 1.

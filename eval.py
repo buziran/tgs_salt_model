@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from operator import itemgetter
 
 import tensorflow as tf
 from tensorflow.keras.models import load_model
@@ -42,20 +43,41 @@ def eval(dataset):
 
         with tf.Session(config=config) as sess:
             K.set_session(sess)
+            steps_train = int(np.ceil(num_train / FLAGS.batch_size))
+            steps_valid = int(np.ceil(num_valid / FLAGS.batch_size))
+
             model = load_model(path_model, compile=False)
             if FLAGS.dice:
                 loss = weighted_bce_dice_loss
             else:
                 loss = weighted_binary_crossentropy
-            model.compile(optimizer="adam", loss=loss, metrics=get_metrics())
 
-            steps_train = int(np.ceil(num_train / FLAGS.batch_size))
-            steps_valid = int(np.ceil(num_valid / FLAGS.batch_size))
+            threshold = 0.5
+            if FLAGS.best_threshold:
+                print("Searching best threshold for validation data")
+                threshold = search_best_threshod(model, sess, iter_valid, steps_valid)
+                print("Best threshold is {}".format(threshold))
 
+            model.compile(optimizer="adam", loss=loss, metrics=get_metrics(threshold))
+
+            sess.run([iter_train.initializer, iter_valid.initializer])
             metrics = model.evaluate(x=iter_train, steps=steps_train)
-            print("Training loss:{}, iou:{}, score:{}".format(metrics[0], metrics[1], metrics[2]))
+            print("Training loss:{}, iou:{}, score:{} (threshold={})".format(metrics[0], metrics[1], metrics[2], threshold))
             metrics = model.evaluate(x=iter_valid, steps=steps_valid)
-            print("Validation loss:{}, iou:{}, score:{}".format(metrics[0], metrics[1], metrics[2]))
+            print("Validation loss:{}, iou:{}, score:{} (threshold={})".format(metrics[0], metrics[1], metrics[2], threshold))
+
+def search_best_threshod(model, sess, iterator, steps):
+    # _model = deepcopy(model)
+    scores = {}
+    for threshold in np.arange(0.0, 1.0001, 0.05):
+        sess.run(iterator.initializer)
+        model.compile(optimizer="adam", loss=weighted_bce_dice_loss, metrics=get_metrics(threshold))
+        metrics = model.evaluate(x=iterator, steps=steps)
+        scores[threshold] = metrics[2]
+
+    print(scores)
+    threshold_best = max(scores.items(), key=itemgetter(1))[0]
+    return threshold_best
 
 
 def main(argv=None):
