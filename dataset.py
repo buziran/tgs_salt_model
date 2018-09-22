@@ -36,6 +36,14 @@ def pad(image, target_shape, mode='CONSTANT', constant_values=0):
     image = tf.pad(image, mode=mode, paddings=[[top, bottom], [left, right], [0, 0]])
     return image
 
+
+def rotate(image, angle, interpolation='NEARESET'):
+    image = tf.expand_dims(image, axis=0)
+    image = tf.contrib.image.rotate(image, angle, interpolation)
+    image = tf.squeeze(image, axis=0)
+    return image
+
+
 class Dataset(object):
     def __init__(self, path_input):
         self.path_input = path_input
@@ -245,6 +253,13 @@ class Dataset(object):
                 image = tf.image.resize_image_with_crop_or_pad(image, IM_HEIGHT, IM_WIDTH)
                 mask = tf.image.resize_image_with_crop_or_pad(mask, IM_HEIGHT, IM_WIDTH)
                 weight = tf.image.resize_image_with_crop_or_pad(weight, IM_HEIGHT, IM_WIDTH)
+            if augment_dict['rotation_range'] is not None:
+                rot = augment_dict['rotation_range'] * np.math.pi / 180
+                angle = tf.random_uniform((), -rot, rot, dtype=tf.float32)
+                interp = 'BILINEAR'
+                image = rotate(image, angle, interp)
+                mask = rotate(mask, angle, interp)
+                weight = rotate(weight, angle, interp)
             if augment_dict['height_shift_range'] is not None or augment_dict['width_shift_range'] is not None:
                 image = _rand_shift(
                     image, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
