@@ -12,12 +12,13 @@ import tensorflow.keras.backend as K
 from model import build_model, build_model_ref, load_model, build_model_pretrained, compile_model
 from dataset import Dataset
 from constant import *
-from util import StepDecay, MyTensorBoard
+from util import StepDecay, MyTensorBoard, write_summary
 import config_train
 
 FLAGS = tf.flags.FLAGS
 
 FLAGS_FILENAME = "flags.json"
+MODEL_SUMMARY_FILENAME = "model_summary.txt"
 
 
 def augment_dict():
@@ -77,6 +78,7 @@ def train(dataset):
 
         model = compile_model(model, optimizer=FLAGS.opt, dice=FLAGS.dice,
                               weight_decay=FLAGS.weight_decay, exclude_bn=FLAGS.exclude_bn)
+        write_summary(model, os.path.join(FLAGS.model, MODEL_SUMMARY_FILENAME))
         model.summary()
 
     path_model = os.path.join(FLAGS.model, NAME_MODEL)

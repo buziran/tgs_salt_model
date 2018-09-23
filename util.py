@@ -86,3 +86,9 @@ def get_metrics(threshold=None):
 
 def get_custom_objects():
     return {'weighted_mean_iou': weighted_mean_iou, 'weighted_mean_score': weighted_mean_score}
+
+def write_summary(model, filename):
+    with open(filename, 'w') as f:
+        _print = lambda x: print(x, file=f)
+        model.summary(print_fn=_print)
+
