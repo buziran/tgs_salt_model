@@ -53,6 +53,10 @@ tf.flags.DEFINE_enum(
     'pretrained', None, enum_values=['resnet50', 'inception_resnet_v2', 'densenet121'],
     help="""whether to use batch-normalization""")
 
+tf.flags.DEFINE_enum(
+    'contrib', None, enum_values=['resnet18', 'resnet34', 'resnet50'],
+    help="""contribution model of keras-contrib""")
+
 tf.flags.DEFINE_float('spatial_dropout', None, """factor of spatial dropout""")
 
 tf.flags.DEFINE_bool('batch_norm', True, """whether to use batch-normalization""")
@@ -73,7 +77,7 @@ tf.flags.DEFINE_bool(
     'vertical_flip', True, """whether to apply vertical flip""")
 
 tf.flags.DEFINE_integer(
-    'rotation_range', 30, """random rotation range""")
+    'rotation_range', 0, """random rotation range""")
 
 tf.flags.DEFINE_float(
     'zoom_range', 0.2, """random zoom range""")
@@ -85,7 +89,7 @@ tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
 tf.flags.DEFINE_enum(
-    'random_erase', None, enum_values=['pixel', 'constant', 'zero'], help="""mode to fill in random-erasing""")
+    'random_erase', 'constant', enum_values=['pixel', 'constant', 'zero'], help="""mode to fill in random-erasing""")
 
 tf.flags.DEFINE_float(
     'mixup', None, help="""alpha value of mixup""")
