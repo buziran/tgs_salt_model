@@ -76,9 +76,9 @@ def main(argv=None):
 
         for pred in ys_pred:
             pred = np.squeeze(pred)
-            if FLAGS.adjust in ['resize', 'resize-cv']:
+            if FLAGS.adjust in ['resize']:
                 pred = resize(pred, (ORIG_HEIGHT, ORIG_WIDTH), mode='constant', preserve_range=True)
-            elif FLAGS.adjust in ['pad']:
+            elif FLAGS.adjust in ['reflect', 'constant', 'symmetric']:
                 height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
                 width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
                 pred = crop(pred, (height_padding, width_padding))

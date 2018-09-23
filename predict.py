@@ -49,9 +49,9 @@ def save_png(ys_pred, ids, path_out, adjust='resize'):
     ys_pred = np.squeeze(ys_pred.astype(np.uint8), axis=3)
     ids = ids.astype(str)
     for y_pred, id in zip(ys_pred, ids):
-        if adjust in ['resize', 'resize-cv']:
+        if adjust in ['resize']:
             y_pred = resize(y_pred, (ORIG_HEIGHT, ORIG_WIDTH))
-        elif adjust in ['pad']:
+        elif adjust in ['reflect', 'constant', 'symmetric']:
             height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
             width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
             y_pred = crop(y_pred, (height_padding, width_padding))
@@ -63,9 +63,9 @@ def save_npz(ys_pred, ids, path_out, adjust='resize'):
     ids = [os.path.splitext(id)[0] + '.npz' for id in ids]
     ys_pred = np.squeeze(ys_pred, axis=3)
     for y_pred, id in zip(ys_pred, ids):
-        if adjust in ['resize', 'resize-cv']:
+        if adjust in ['resize']:
             y_pred = resize(y_pred, (ORIG_HEIGHT, ORIG_WIDTH))
-        elif adjust in ['pad']:
+        elif adjust in ['reflect', 'constant', 'symmetric']:
             height_padding = ((IM_HEIGHT - ORIG_HEIGHT) // 2, IM_HEIGHT - ORIG_HEIGHT - (IM_HEIGHT - ORIG_HEIGHT) // 2)
             width_padding = ((IM_WIDTH - ORIG_WIDTH) // 2, IM_WIDTH - ORIG_WIDTH - (IM_WIDTH - ORIG_WIDTH) // 2)
             y_pred = crop(y_pred, (height_padding, width_padding))

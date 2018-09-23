@@ -7,7 +7,7 @@ tf.flags.DEFINE_string(
     'model', '../output/model', """path to model directory""")
 
 tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'], help="""mode to adjust image size""")
+    'adjust', 'resize', enum_values=['resize', 'reflect', 'constant', 'symmetric'], help="""mode to adjust image size""")
 
 tf.flags.DEFINE_integer(
     'cv', 0, help="""index of k-fold cross validation. index must be in 0~9""")

@@ -26,16 +26,18 @@ def resize(image, target_shape, method=tf.image.ResizeMethod.BILINEAR):
     image = tf.image.resize_images(image, target_shape, method=method)
     return image
 
-def pad(image, target_shape, mode='CONSTANT', constant_values=0):
+def pad(image, target_shape, mode='CONSTANT', set_shape=True):
     target_height, target_width = target_shape
     shape = tf.shape(image)
     height, width = shape[0], shape[1]
-    _, _, channels = image.get_shape()
     top = tf.cast((target_height - height) / 2, tf.int32)
     bottom = target_height - height - top
     left = tf.cast((target_width - width) / 2, tf.int32)
     right = target_width - width - left
     image = tf.pad(image, mode=mode, paddings=[[top, bottom], [left, right], [0, 0]])
+    if set_shape:
+        _, _, channels = image.get_shape().as_list()
+        image.set_shape(shape=(target_height, target_width, channels))
     return image
 
 
@@ -88,8 +90,10 @@ class Dataset(object):
             def _adjust(image, path_image):
                 if adjust == 'resize':
                     image = resize(image, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
-                elif adjust == 'pad':
-                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+                elif adjust in ['reflect', 'constant', 'symmetric']:
+                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
+                else:
+                    raise ValueError("adjust-mode {} is not supported".format(adjust))
                 return image, path_image
         else:
             def _load_normalize(path_image):
@@ -99,8 +103,8 @@ class Dataset(object):
             def _adjust(image):
                 if adjust == 'resize':
                     image = resize(image, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
-                elif adjust == 'pad':
-                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+                elif adjust in ['reflect', 'constant', 'symmetric']:
+                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
                 return image
 
         dataset_test = dataset_test.map(_load_normalize, num_parallel_calls=8)
@@ -150,10 +154,12 @@ class Dataset(object):
                 image = resize(image, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
                 mask = resize(mask, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
                 weight = resize(weight, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-            elif adjust == 'pad':
-                image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+            elif adjust in ['reflect', 'constant', 'symmetric']:
+                image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
                 mask = pad(mask, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
                 weight = pad(weight, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+            else:
+                raise ValueError("adjust-mode {} is not supported".format(adjust))
             return image, mask, weight
 
         def _rand_flip(image, flip_fn, p):
@@ -165,9 +171,9 @@ class Dataset(object):
             width_shift_range = width_shift_range if width_shift_range is not None else 0.0
             target_height = tf.cast(IM_HEIGHT * (1+height_shift_range), dtype=tf.int32)
             target_width = tf.cast(IM_WIDTH * (1+width_shift_range), dtype=tf.int32)
-            image = pad(image, target_shape=(target_height, target_width), mode=mode)
-            mask = pad(mask, target_shape=(target_height, target_width), mode='CONSTANT')
-            weight = pad(weight, target_shape=(target_height, target_width), mode='CONSTANT')
+            image = pad(image, target_shape=(target_height, target_width), mode=mode, set_shape=False)
+            mask = pad(mask, target_shape=(target_height, target_width), mode='CONSTANT', set_shape=False)
+            weight = pad(weight, target_shape=(target_height, target_width), mode='CONSTANT', set_shape=False)
             image, mask, weight = _rand_crop(image, mask, weight, orig_height, orig_width)
             return image, mask, weight
 
@@ -248,7 +254,6 @@ class Dataset(object):
             return image, mask, weight
 
         def _pad(image, mask, weight, target_height, target_width, mode):
-            print("mode is {}".format(mode))
             image = pad(image, (target_height, target_width), mode=mode)
             mask = pad(mask, (target_height, target_width), mode='CONSTANT')
             weight = pad(weight, (target_height, target_width), mode='CONSTANT')
