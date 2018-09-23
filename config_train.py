@@ -12,6 +12,9 @@ tf.flags.DEFINE_integer(
 tf.flags.DEFINE_bool(
     'early_stopping', False, help="""whether to apply early-stopping""")
 
+tf.flags.DEFINE_bool(
+    'reduce_on_plateau', False, help="""whether to reduce learning rate on plateau""")
+
 tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
 
 tf.flags.DEFINE_enum(

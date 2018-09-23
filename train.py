@@ -8,6 +8,7 @@ from pprint import pprint
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
 import tensorflow.keras.backend as K
+from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 
 from model import build_model, build_model_ref, load_model, build_model_pretrained, compile_model
 from dataset import Dataset
@@ -87,10 +88,14 @@ def train(dataset):
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)
     lrscheduler = LearningRateScheduler(
         StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay, FLAGS.freeze_once), verbose=1)
+    lrreducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, verbose=1, mode='min',
+                                  epsilon=0.0001, cooldown=4)
 
     callbacks = [checkpointer, tensorboarder, lrscheduler]
     if FLAGS.early_stopping:
         callbacks += EarlyStopping(patience=5, verbose=1)
+    if FLAGS.reduce_on_plateau:
+        callbacks += lrreducer
 
     num_train, num_valid = dataset.len_train_valid(n_splits=N_SPLITS, idx_kfold=FLAGS.cv)
 
