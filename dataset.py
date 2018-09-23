@@ -28,7 +28,9 @@ def resize(image, target_shape, method=tf.image.ResizeMethod.BILINEAR):
 
 def pad(image, target_shape, mode='CONSTANT', constant_values=0):
     target_height, target_width = target_shape
-    height, width, channels = image.get_shape()
+    shape = tf.shape(image)
+    height, width = shape[0], shape[1]
+    _, _, channels = image.get_shape()
     top = tf.cast((target_height - height) / 2, tf.int32)
     bottom = target_height - height - top
     left = tf.cast((target_width - width) / 2, tf.int32)
@@ -229,9 +231,34 @@ class Dataset(object):
             mask = tf.reduce_sum(masks * mixup_factor, axis=0, keepdims=False)
             return image, mask
 
+        def _rand_crop(image, mask, weight, target_height, target_width):
+            orig_shape = tf.shape(image)
+            orig_height, orig_width = orig_shape[0], orig_shape[1]
+            offset_height = tf.cond(tf.equal(0, orig_height-target_height),
+                                    true_fn=lambda:0,
+                                    false_fn=lambda:tf.random_uniform((), 0, orig_height-target_height, dtype=tf.int32))
+            offset_width = tf.cond(tf.equal(0, orig_width-target_width),
+                                   true_fn=lambda:0,
+                                   false_fn=lambda:tf.random_uniform((), 0, orig_width-target_width, dtype=tf.int32))
+            image = tf.image.crop_to_bounding_box(image, offset_height, offset_width, target_height, target_width)
+            mask = tf.image.crop_to_bounding_box(mask, offset_height, offset_width, target_height, target_width)
+            weight = tf.image.crop_to_bounding_box(weight, offset_height, offset_width, target_height, target_width)
+            return image, mask, weight
+
+        def _pad(image, mask, weight, target_height, target_width, mode):
+            print("mode is {}".format(mode))
+            image = pad(image, (target_height, target_width), mode=mode)
+            mask = pad(mask, (target_height, target_width), mode='CONSTANT')
+            weight = pad(weight, (target_height, target_width), mode='CONSTANT')
+            image.set_shape((target_height, target_width, IM_CHAN))
+            mask.set_shape((target_height, target_width, 1))
+            weight.set_shape((target_height, target_width, 1))
+            return image, mask, weight
+
         def _augment(image, mask, weight):
             if augment_dict is None:
                 return image, mask, weight
+            mode = augment_dict['fill_mode']
             if augment_dict['horizontal_flip']:
                 p = tf.random_uniform(())
                 image = _rand_flip(image, tf.image.flip_left_right, p)
@@ -245,7 +272,7 @@ class Dataset(object):
             if augment_dict['brightness_range'] is not None:
                 max_delta = augment_dict['brightness_range']
                 image = tf.image.random_brightness(image, max_delta)
-            if augment_dict['zoom_range'] is not None:
+            if augment_dict['zoom_range'] is not None and augment_dict['zoom_range'] != 0.0:
                 zoom_range = augment_dict['zoom_range']
                 zoom = tf.random_uniform((), (1-zoom_range), (1+zoom_range), dtype=tf.float32)
                 target_height = tf.cast(IM_HEIGHT * zoom, dtype=tf.int32)
@@ -253,9 +280,9 @@ class Dataset(object):
                 image = tf.image.resize_images(image, size=(target_height, target_width))
                 mask = tf.image.resize_images(mask, size=(target_height, target_width))
                 weight = tf.image.resize_images(weight, size=(target_height, target_width))
-                image = tf.image.resize_image_with_crop_or_pad(image, IM_HEIGHT, IM_WIDTH)
-                mask = tf.image.resize_image_with_crop_or_pad(mask, IM_HEIGHT, IM_WIDTH)
-                weight = tf.image.resize_image_with_crop_or_pad(weight, IM_HEIGHT, IM_WIDTH)
+                image, mask, weight = tf.cond(zoom>1.0,
+                                              true_fn=lambda:_rand_crop(image, mask, weight, IM_HEIGHT, IM_WIDTH),
+                                              false_fn=lambda:_pad(image, mask, weight, IM_HEIGHT, IM_WIDTH, mode=mode), strict=True)
             if augment_dict['rotation_range'] is not None:
                 rot = augment_dict['rotation_range'] * np.math.pi / 180
                 angle = tf.random_uniform((), -rot, rot, dtype=tf.float32)
