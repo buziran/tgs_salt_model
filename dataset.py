@@ -242,6 +242,9 @@ class Dataset(object):
                 image = _rand_flip(image, tf.image.flip_up_down, p)
                 mask = _rand_flip(mask, tf.image.flip_up_down, p)
                 weight = _rand_flip(weight, tf.image.flip_up_down, p)
+            if augment_dict['brightness_range'] is not None:
+                max_delta = augment_dict['brightness_range']
+                image = tf.image.random_brightness(image, max_delta)
             if augment_dict['zoom_range'] is not None:
                 zoom_range = augment_dict['zoom_range']
                 zoom = tf.random_uniform((), (1-zoom_range), (1+zoom_range), dtype=tf.float32)

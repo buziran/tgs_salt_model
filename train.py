@@ -30,6 +30,7 @@ def augment_dict():
         zoom_range=FLAGS.zoom_range,
         width_shift_range=FLAGS.shift_range,
         height_shift_range=FLAGS.shift_range,
+        brightness_range=FLAGS.brightness_range,
         random_erase=FLAGS.random_erase,
         mixup=FLAGS.mixup,
         fill_mode=FLAGS.fill_mode)

@@ -88,6 +88,9 @@ tf.flags.DEFINE_float(
 tf.flags.DEFINE_float(
     'shift_range', 0.0, """random shift range""")
 
+tf.flags.DEFINE_float(
+    'brightness_range', 0.0, """random brightness range""")
+
 tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
