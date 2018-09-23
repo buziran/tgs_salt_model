@@ -159,15 +159,17 @@ class Dataset(object):
         def _rand_flip(image, flip_fn, p):
             return tf.cond(p>0.5, true_fn=lambda: flip_fn(image), false_fn=lambda: image)
 
-        def _rand_shift(image, height_shift_range, width_shift_range, seed=None):
-            orig_height, orig_width, orig_channels = image.get_shape()
+        def _rand_shift(image, mask, weight, height_shift_range, width_shift_range, mode='CONSTANT'):
+            orig_height, orig_width, orig_channels = image.get_shape().as_list()
             height_shift_range = height_shift_range if height_shift_range is not None else 0.0
             width_shift_range = width_shift_range if width_shift_range is not None else 0.0
             target_height = tf.cast(IM_HEIGHT * (1+height_shift_range), dtype=tf.int32)
             target_width = tf.cast(IM_WIDTH * (1+width_shift_range), dtype=tf.int32)
-            image = pad(image, target_shape=(target_height, target_width), mode='CONSTANT')
-            image = tf.random_crop(image, size=(orig_height, orig_width, orig_channels), seed=seed)
-            return image
+            image = pad(image, target_shape=(target_height, target_width), mode=mode)
+            mask = pad(mask, target_shape=(target_height, target_width), mode='CONSTANT')
+            weight = pad(weight, target_shape=(target_height, target_width), mode='CONSTANT')
+            image, mask, weight = _rand_crop(image, mask, weight, orig_height, orig_width)
+            return image, mask, weight
 
         def _rand_erase(
                 image, mask, weight, range_image, range_mask, range_weight,
@@ -291,12 +293,8 @@ class Dataset(object):
                 mask = rotate(mask, angle, interp)
                 weight = rotate(weight, angle, interp)
             if augment_dict['height_shift_range'] is not None or augment_dict['width_shift_range'] is not None:
-                image = _rand_shift(
-                    image, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
-                mask = _rand_shift(
-                    mask, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
-                weight = _rand_shift(
-                    weight, augment_dict['height_shift_range'], augment_dict['width_shift_range'], seed=17)
+                image, mask, weight = _rand_shift(
+                    image, mask, weight, augment_dict['height_shift_range'], augment_dict['width_shift_range'], mode=mode)
             if augment_dict['random_erase'] is not None:
                 if augment_dict['random_erase'] == 'constant':
                     pixel_wise = False
