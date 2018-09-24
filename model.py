@@ -217,14 +217,8 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0):
     return model
 
 
-def load_model(path_model, optimizer='adam', dice=False):
-    if dice:
-        loss = weighted_bce_dice_loss
-    else:
-        loss = weighted_binary_crossentropy
-
+def load_model(path_model):
     model = _load_model(path_model, compile=False)
-    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 
 

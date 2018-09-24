@@ -9,8 +9,9 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
 import tensorflow.keras.backend as K
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.models import load_model
 
-from model import build_model, build_model_ref, load_model, build_model_pretrained, compile_model
+from model import build_model, build_model_ref, build_model_pretrained, compile_model
 from dataset import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard, write_summary
@@ -65,7 +66,7 @@ def train(dataset):
     with tf.device('/gpu:0'):
         if FLAGS.restore is not None:
             path_restore = os.path.join(FLAGS.restore, NAME_MODEL)
-            model = load_model(path_restore, dice=FLAGS.dice, optimizer=FLAGS.opt)
+            model = load_model(path_restore, compile=False)
         elif FLAGS.pretrained is not None:
             model = build_model_pretrained(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
