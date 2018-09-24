@@ -124,12 +124,21 @@ def lovasz_hinge(logits, labels, weights=None, per_image=True):
       per_image: compute the loss per image instead of per batch
     """
     if per_image:
-        def treat_image(log_lab_w):
-            log, lab, w = log_lab_w
-            log, lab, w = tf.expand_dims(log, 0), tf.expand_dims(lab, 0), tf.expand_dims(w, 0)
-            log, lab, w = flatten_binary_scores(log, lab, w)
-            return lovasz_hinge_flat(log, lab, w)
-        losses = tf.map_fn(treat_image, (logits, labels, weights), dtype=tf.float32)
+        if weights is not None:
+            def treat_image(log_lab_w):
+                log, lab, w = log_lab_w
+                log, lab, w = tf.expand_dims(log, 0), tf.expand_dims(lab, 0), tf.expand_dims(w, 0)
+                log, lab, w = flatten_binary_scores(log, lab, w)
+                return lovasz_hinge_flat(log, lab, w)
+            losses = tf.map_fn(treat_image, (logits, labels, weights), dtype=tf.float32)
+        else:
+            def treat_image(log_lab):
+                log, lab = log_lab
+                log, lab = tf.expand_dims(log, 0), tf.expand_dims(lab, 0)
+                log, lab = flatten_binary_scores(log, lab)
+                return lovasz_hinge_flat(log, lab)
+            losses = tf.map_fn(treat_image, (logits, labels), dtype=tf.float32)
+
         loss = tf.reduce_mean(losses)
     else:
         loss = lovasz_hinge_flat(*flatten_binary_scores(logits, labels, weights))
