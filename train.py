@@ -79,7 +79,7 @@ def train(dataset):
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out,
                 depth=FLAGS.depth, start_ch=FLAGS.start_ch)
 
-        model = compile_model(model, optimizer=FLAGS.opt, dice=FLAGS.dice,
+        model = compile_model(model, optimizer=FLAGS.opt, loss=FLAGS.loss,
                               weight_decay=FLAGS.weight_decay, exclude_bn=FLAGS.exclude_bn)
         write_summary(model, os.path.join(FLAGS.model, MODEL_SUMMARY_FILENAME))
         model.summary()

@@ -9,7 +9,8 @@ from tensorflow.keras.applications import inception_resnet_v2
 import resnet50
 import densenet
 
-from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy, l2_loss
+from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy, \
+    l2_loss, weighted_lovasz_hinge, weighted_lovasz_dice_loss
 from util import get_metrics
 
 
@@ -217,16 +218,16 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0):
     return model
 
 
-def load_model(path_model):
-    model = _load_model(path_model, compile=False)
-    return model
-
-
-def compile_model(model, optimizer='adam', dice=False, weight_decay=0.0, exclude_bn=True):
-    if dice:
-        _loss = weighted_bce_dice_loss
-    else:
+def compile_model(model, optimizer='adam', loss='bce-dice', dice=False, weight_decay=0.0, exclude_bn=True):
+    if loss == 'bce':
         _loss = weighted_binary_crossentropy
+    elif loss == 'bce-dice':
+        _loss = weighted_bce_dice_loss
+    elif loss == 'lovasz':
+        _loss = weighted_lovasz_hinge
+    elif loss == 'lovasz-dice':
+        _loss = weighted_lovasz_dice_loss
+
     if weight_decay != 0.0:
         _l2_loss = l2_loss(weight_decay, exclude_bn)
         loss = lambda true, pred: _loss(true, pred) + _l2_loss

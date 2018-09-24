@@ -1,8 +1,9 @@
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 from tensorflow.keras import backend as K
-from tensorflow.keras.losses import binary_crossentropy
 import numpy as np
+
+from LovaszSoftmax.tensorflow.lovasz_losses_tf import lovasz_grad
 
 
 def mean_iou(y_true, y_pred):
@@ -100,6 +101,90 @@ def weighted_bce_dice_loss(y_true_and_weight, y_pred):
     return wbce + dloss
 
 
+def weighted_lovasz_hinge(y_true_and_weight, y_pred):
+    y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
+    y_logits = tf.log(y_pred / (1 - y_pred))
+    return lovasz_hinge(y_logits, y_true, weight)
+
+
+def weighted_lovasz_dice_loss(y_true_and_weight, y_pred):
+    lovasz = weighted_lovasz_hinge(y_true_and_weight, y_pred)
+    y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
+    mask = tf.greater(weight, 1)
+    dloss = dice_loss(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
+    return lovasz + dloss
+
+
+def lovasz_hinge(logits, labels, weights=None, per_image=True):
+    """
+    Binary Lovasz hinge loss
+      logits: [B, H, W] Variable, logits at each pixel (between -\infty and +\infty)
+      labels: [B, H, W] Tensor, binary ground truth masks (0 or 1)
+      weights: [B, H, W] Tensor, weights
+      per_image: compute the loss per image instead of per batch
+    """
+    if per_image:
+        def treat_image(log_lab_w):
+            log, lab, w = log_lab_w
+            log, lab, w = tf.expand_dims(log, 0), tf.expand_dims(lab, 0), tf.expand_dims(w, 0)
+            log, lab, w = flatten_binary_scores(log, lab, w)
+            return lovasz_hinge_flat(log, lab, w)
+        losses = tf.map_fn(treat_image, (logits, labels, weights), dtype=tf.float32)
+        loss = tf.reduce_mean(losses)
+    else:
+        loss = lovasz_hinge_flat(*flatten_binary_scores(logits, labels, weights))
+    return loss
+
+
+def lovasz_hinge_flat(logits, labels, weights=None):
+    """
+    Binary Lovasz hinge loss
+      logits: [P] Variable, logits at each prediction (between -\infty and +\infty)
+      labels: [P] Tensor, binary ground truth labels (0 or 1)
+      weights: [P] Tensor, weight
+      ignore: label to ignore
+    """
+
+    if weights is None:
+        weights = tf.ones_like(logits, dtype=logits.dtype)
+
+    def compute_loss():
+        labelsf = tf.cast(labels, logits.dtype)
+        signs = 2. * labelsf - 1.
+        errors = 1. - logits * tf.stop_gradient(signs) * tf.stop_gradient(weights)
+        errors_sorted, perm = tf.nn.top_k(errors, k=tf.shape(errors)[0], name="descending_sort")
+        gt_sorted = tf.gather(labelsf, perm)
+        grad = lovasz_grad(gt_sorted)
+        loss = tf.tensordot(tf.nn.relu(errors_sorted), tf.stop_gradient(grad), 1, name="loss_non_void")
+        return loss
+
+    # deal with the void prediction case (only void pixels)
+    loss = tf.cond(tf.equal(tf.shape(logits)[0], 0),
+                   lambda: tf.reduce_sum(logits) * 0.,
+                   compute_loss,
+                   strict=True,
+                   name="loss"
+                   )
+    return loss
+
+
+def flatten_binary_scores(scores, labels, weights=None):
+    """
+    Flattens predictions in the batch (binary case)
+    Remove weights equal to zero
+    """
+    scores = tf.reshape(scores, (-1,))
+    labels = tf.reshape(labels, (-1,))
+    if weights is None:
+        return scores, labels
+    weights = tf.reshape(weights, (-1,))
+    valid = tf.not_equal(weights, 0.0)
+    vscores = tf.boolean_mask(scores, valid, name='valid_scores')
+    vlabels = tf.boolean_mask(labels, valid, name='valid_labels')
+    weights = tf.boolean_mask(weights, valid, name='valid_weights')
+    return vscores, vlabels, weights
+
+
 def mean_score_per_image(y_true, y_pred, threshold=None):
     """Calculate score per image"""
     # GT, Predともに前景ゼロの場合はスコアを1とする
@@ -133,6 +218,7 @@ def mean_score_per_image(y_true, y_pred, threshold=None):
 def split_label_weight(label_and_weight):
     label, weight = tf.split(label_and_weight, [1, 1], axis=3)
     return label, weight
+
 
 def l2_loss(weight_decay, exclude_bn):
     if exclude_bn:

@@ -15,5 +15,7 @@ tf.flags.DEFINE_integer(
 tf.flags.DEFINE_integer(
     'batch_size', 32, """batch size""")
 
-tf.flags.DEFINE_bool('dice', True, """whether to use dice loss""")
+tf.flags.DEFINE_enum(
+    'loss', 'bce-dice', enum_values=['bce', 'bce-dice', 'lovasz', 'lovasz-dice'], help="""loss type""")
+
 

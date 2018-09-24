@@ -14,6 +14,7 @@ from dataset import Dataset
 from metrics import weighted_bce_dice_loss, weighted_binary_crossentropy
 from constant import *
 import config_eval
+from model import compile_model
 from util import get_metrics, get_custom_objects
 
 FLAGS = tf.flags.FLAGS
@@ -47,10 +48,6 @@ def eval(dataset):
             steps_valid = int(np.ceil(num_valid / FLAGS.batch_size))
 
             model = load_model(path_model, compile=False)
-            if FLAGS.dice:
-                loss = weighted_bce_dice_loss
-            else:
-                loss = weighted_binary_crossentropy
 
             threshold = 0.5
             if FLAGS.best_threshold:
@@ -58,7 +55,7 @@ def eval(dataset):
                 threshold = search_best_threshod(model, sess, iter_valid, steps_valid)
                 print("Best threshold is {}".format(threshold))
 
-            model.compile(optimizer="adam", loss=loss, metrics=get_metrics(threshold))
+            model = compile_model(model, optimizer="adam", loss=FLAGS.loss)
 
             sess.run([iter_train.initializer, iter_valid.initializer])
             metrics = model.evaluate(x=iter_train, steps=steps_train)
