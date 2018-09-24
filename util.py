@@ -92,3 +92,7 @@ def write_summary(model, filename):
         _print = lambda x: print(x, file=f)
         model.summary(print_fn=_print)
 
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
+

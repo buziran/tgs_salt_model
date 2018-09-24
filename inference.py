@@ -12,7 +12,7 @@ import tensorflow as tf
 from skimage.transform import resize
 from tqdm import tnrange, tqdm_notebook, tqdm
 
-from util import RLenc
+from util import RLenc, sigmoid
 from dataset import Dataset
 from metrics import mean_iou, mean_score, weighted_bce_dice_loss
 from constant import *
@@ -72,7 +72,8 @@ def main(argv=None):
         xs, paths = sess.run(sample_tensor)
         ids = np.asarray([os.path.split(path)[1].decode() for path in paths])
         test_ids.extend(ids)
-        ys_pred = model.predict_on_batch(xs)
+        ys_logits = model.predict_on_batch(xs)
+        ys_pred = sigmoid(ys_logits)
 
         for pred in ys_pred:
             pred = np.squeeze(pred)

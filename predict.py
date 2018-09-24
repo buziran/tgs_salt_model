@@ -15,7 +15,7 @@ from skimage.util import crop
 from dataset import Dataset
 from metrics import mean_iou, mean_score
 from constant import *
-from util import get_metrics, get_custom_objects
+from util import get_metrics, get_custom_objects, sigmoid
 
 tf.flags.DEFINE_string(
     'input', '../input/train',
@@ -97,7 +97,8 @@ def main(argv=None):
 
         if id_batch == num_batch:
             break
-        ys_pred = model.predict_on_batch(xs)
+        ys_logits = model.predict_on_batch(xs)
+        ys_pred = sigmoid(ys_logits)
         save_png(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)
         if FLAGS.npz:
             save_npz(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)

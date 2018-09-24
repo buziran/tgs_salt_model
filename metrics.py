@@ -6,7 +6,7 @@ import numpy as np
 from LovaszSoftmax.tensorflow.lovasz_losses_tf import lovasz_grad
 
 
-def mean_iou(y_true, y_pred):
+def _mean_iou(y_true, y_pred):
     prec = []
     for t in np.arange(0.5, 1.0, 0.05):
         y_pred_ = tf.to_int32(y_pred > t)
@@ -17,14 +17,18 @@ def mean_iou(y_true, y_pred):
         prec.append(score)
     return K.mean(K.stack(prec), axis=0)
 
+def mean_iou(y_true, y_logits):
+    y_pred = tf.sigmoid(y_logits)
+    return _mean_iou(y_true, y_pred)
 
-def weighted_mean_iou(y_true_and_weight, y_pred):
+def weighted_mean_iou(y_true_and_weight, y_logits):
+    y_pred = tf.sigmoid(y_logits)
     y_true, weight = split_label_weight(y_true_and_weight)
     mask = tf.greater(weight, 0)
     return mean_iou(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
 
 
-def mean_score(y_true, y_pred, threshold=None):
+def _mean_score(y_true, y_pred, threshold=None):
     """
     Calculate mean score for batch images
 
@@ -70,10 +74,16 @@ def mean_score(y_true, y_pred, threshold=None):
     return tf.reduce_mean(scores_per_image)
 
 
-def weighted_mean_score(y_true_and_weight, y_pred, threshold=None):
+def mean_score(y_true, y_logits, threshold=None):
+    y_pred = tf.sigmoid(y_logits)
+    return _mean_score(y_true, y_pred, threshold)
+
+
+def weighted_mean_score(y_true_and_weight, y_logits, threshold=None):
+    y_pred = tf.sigmoid(y_logits)
     y_true, weight = split_label_weight(y_true_and_weight)
     mask = tf.to_int32(tf.greater(weight, 0))
-    return mean_score(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype), threshold)
+    return _mean_score(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype), threshold)
 
 
 def dice_loss(y_true, y_pred):
@@ -85,35 +95,34 @@ def dice_loss(y_true, y_pred):
     return 1. - score
 
 
-def weighted_binary_crossentropy(y_true_and_weight, y_pred):
+def weighted_binary_crossentropy(y_true_and_weight, y_logits):
     y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
-    bce = K.binary_crossentropy(y_true, y_pred)
+    bce = K.binary_crossentropy(y_true, y_logits, from_logits=True)
     wbce = bce * weight
     return K.mean(wbce)
 
 
-def weighted_bce_dice_loss(y_true_and_weight, y_pred):
+def weighted_bce_dice_loss(y_true_and_weight, y_logits):
     y_true, weight = split_label_weight(y_true_and_weight)
     mask = tf.greater(weight, 0)
-    wbce = weighted_binary_crossentropy(y_true_and_weight, y_pred)
+    wbce = weighted_binary_crossentropy(y_true_and_weight, y_logits)
+    y_pred = tf.sigmoid(y_logits)
     dloss = dice_loss(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
 
     return wbce + dloss
 
 
-def weighted_lovasz_hinge(y_true_and_weight, y_pred):
+def weighted_lovasz_hinge(y_true_and_weight, y_logits):
     y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
-    epsilon_ = tf.constant(1e-7, dtype=y_pred.dtype.base_dtype)
-    y_pred = tf.clip_by_value(y_pred, epsilon_, 1 - epsilon_)
-    y_logits = tf.log(y_pred / (1 - y_pred))
     lovasz = lovasz_hinge(y_logits, y_true, weight)
     return lovasz
 
 
-def weighted_lovasz_dice_loss(y_true_and_weight, y_pred):
-    lovasz = weighted_lovasz_hinge(y_true_and_weight, y_pred)
+def weighted_lovasz_dice_loss(y_true_and_weight, y_logits):
+    lovasz = weighted_lovasz_hinge(y_true_and_weight, y_logits)
     y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
     mask = tf.greater(weight, 0)
+    y_pred = tf.sigmoid(y_logits)
     dloss = dice_loss(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
     return lovasz + dloss
 

@@ -104,7 +104,7 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
-    outputs = Conv2D(1, (1, 1), activation='sigmoid', name='prediction')(outputs)
+    outputs = Conv2D(1, (1, 1), name='prediction')(outputs)
     model = Model(inputs=[inputs], outputs=[outputs])
     return model
 
@@ -144,7 +144,7 @@ def build_model_ref(
         inputs = Input(shape=img_shape)
         outputs = level_block(
             inputs, start_ch, depth, inc_rate, activation, dropout, batchnorm, maxpool, upconv, residual)
-        outputs = Conv2D(out_ch, 1, activation='sigmoid')(outputs)
+        outputs = Conv2D(out_ch, 1)(outputs)
         return Model(inputs=inputs, outputs=outputs)
 
     img_shape = [height, width, channels]
@@ -211,7 +211,7 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0):
     c9 = Conv2D(8, (3, 3), activation='relu', padding='same')(u9)
     c9 = Conv2D(8, (3, 3), activation='relu', padding='same')(c9)
 
-    outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
+    outputs = Conv2D(1, (1, 1))(c9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
 
