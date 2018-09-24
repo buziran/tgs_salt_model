@@ -74,6 +74,9 @@ tf.flags.DEFINE_integer('start_ch', 16, """number of channel at UNet first layer
 
 """Augmentations"""
 tf.flags.DEFINE_bool(
+    'augment', True, """whether to apply augment""")
+
+tf.flags.DEFINE_bool(
     'horizontal_flip', True, """whether to apply horizontal flip""")
 
 tf.flags.DEFINE_bool(

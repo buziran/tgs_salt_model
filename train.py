@@ -24,6 +24,8 @@ MODEL_SUMMARY_FILENAME = "model_summary.txt"
 
 
 def augment_dict():
+    if not FLAGS.augment:
+        return None
     return dict(
         horizontal_flip=FLAGS.horizontal_flip,
         vertical_flip=FLAGS.vertical_flip,
