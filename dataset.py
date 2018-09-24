@@ -320,24 +320,25 @@ class Dataset(object):
             mask_and_weight = tf.concat((mask, weight), axis=2)
             return image, mask_and_weight
 
+        num_parallel_calls = 8
         dataset_train = dataset_train.shuffle(batch_size*10)
-        dataset_train = dataset_train.map(_load_normalize, num_parallel_calls=8)
+        dataset_train = dataset_train.map(_load_normalize, num_parallel_calls)
 
         if augment_dict is not None and augment_dict['mixup'] is not None:
             dataset_train = dataset_train.batch(2)
-            dataset_train = dataset_train.map(_mixup, num_parallel_calls=8)
+            dataset_train = dataset_train.map(_mixup, num_parallel_calls)
 
-        dataset_train = dataset_train.map(_create_weight, num_parallel_calls=8)
-        dataset_train = dataset_train.map(_adjust, num_parallel_calls=8)
-        dataset_train = dataset_train.map(_augment, num_parallel_calls=8)
+        dataset_train = dataset_train.map(_create_weight, num_parallel_calls)
+        dataset_train = dataset_train.map(_adjust, num_parallel_calls)
+        dataset_train = dataset_train.map(_augment, num_parallel_calls)
         dataset_train = dataset_train.map(_concat_mask_weight)
         dataset_train = dataset_train.repeat(repeat)
         dataset_train = dataset_train.batch(batch_size)
         dataset_train = dataset_train.prefetch(1)
 
-        dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls=8)
-        dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls=8)
-        dataset_valid = dataset_valid.map(_adjust, num_parallel_calls=8)
+        dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls)
+        dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls)
+        dataset_valid = dataset_valid.map(_adjust, num_parallel_calls)
         dataset_valid = dataset_valid.map(_concat_mask_weight)
         dataset_valid = dataset_valid.repeat(repeat)
         dataset_valid = dataset_valid.batch(batch_size)
