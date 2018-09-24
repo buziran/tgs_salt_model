@@ -94,7 +94,7 @@ def weighted_binary_crossentropy(y_true_and_weight, y_pred):
 
 def weighted_bce_dice_loss(y_true_and_weight, y_pred):
     y_true, weight = split_label_weight(y_true_and_weight)
-    mask = tf.greater(weight, 1)
+    mask = tf.greater(weight, 0)
     wbce = weighted_binary_crossentropy(y_true_and_weight, y_pred)
     dloss = dice_loss(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
 
@@ -103,14 +103,17 @@ def weighted_bce_dice_loss(y_true_and_weight, y_pred):
 
 def weighted_lovasz_hinge(y_true_and_weight, y_pred):
     y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
+    epsilon_ = tf.constant(1e-7, dtype=y_pred.dtype.base_dtype)
+    y_pred = tf.clip_by_value(y_pred, epsilon_, 1 - epsilon_)
     y_logits = tf.log(y_pred / (1 - y_pred))
-    return lovasz_hinge(y_logits, y_true, weight)
+    lovasz = lovasz_hinge(y_logits, y_true, weight)
+    return lovasz
 
 
 def weighted_lovasz_dice_loss(y_true_and_weight, y_pred):
     lovasz = weighted_lovasz_hinge(y_true_and_weight, y_pred)
     y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
-    mask = tf.greater(weight, 1)
+    mask = tf.greater(weight, 0)
     dloss = dice_loss(y_true * tf.cast(mask, y_true.dtype), y_pred * tf.cast(mask, y_true.dtype))
     return lovasz + dloss
 
