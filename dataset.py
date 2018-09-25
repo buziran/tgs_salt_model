@@ -367,6 +367,10 @@ class Dataset(object):
         dataset_train = dataset_train.prefetch(1)
 
         dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls)
+
+        if filter_vert_hori:
+            dataset_valid = dataset_valid.filter(_filter_vert_hori)
+
         dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls)
         dataset_valid = dataset_valid.map(_adjust, num_parallel_calls)
         dataset_valid = dataset_valid.map(_concat_mask_weight)
