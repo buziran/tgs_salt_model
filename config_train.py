@@ -51,6 +51,14 @@ tf.flags.DEFINE_list(
 tf.flags.DEFINE_bool(
     'debug', False, "Run as debug mode")
 
+"""Dataset"""
+
+tf.flags.DEFINE_bool(
+    "filter_vert_hori", True, "whether to filter vertical/horizontal mask")
+
+tf.flags.DEFINE_float(
+    "ignore_tiny", 0.0, "ignore mask when (fg ratio) < ignore_tiny")
+
 """Model"""
 tf.flags.DEFINE_enum(
     'pretrained', None, enum_values=['resnet50', 'inception_resnet_v2', 'densenet121'],

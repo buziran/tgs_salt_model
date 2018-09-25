@@ -117,7 +117,7 @@ class Dataset(object):
 
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
-                        batch_size=32, augment_dict=None, repeat=None):
+                        batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, augment_dict=None, repeat=None):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
 
         paths_train_x = [os.path.join(self.path_input, 'images', idx) for idx in id_train]
@@ -137,7 +137,7 @@ class Dataset(object):
             mask = load_img(path_mask, channels=1)
             return normalize(image), normalize(mask)
 
-        def _filter_rect(image, mask):
+        def _filter_vert_hori(image, mask):
             is_filled = tf.reduce_all(tf.equal(mask, 1.0))
             is_empty = tf.reduce_all(tf.equal(mask, 0.0))
             is_uniform = tf.logical_or(is_filled, is_empty)
@@ -327,6 +327,14 @@ class Dataset(object):
                                    range_image=range_image, range_mask=(0, 0), range_weight=(0, 0), pixel_wise=pixel_wise)
             return image, mask, weight
 
+        def _ignore_tiny(image, mask, weight):
+            foreground_ratio = tf.reduce_sum(mask) / tf.reduce_sum(tf.ones_like(mask, dtype=tf.float32))
+            is_tiny_mask = tf.less_equal(foreground_ratio, ignore_tiny)
+            weight = tf.cond(is_tiny_mask,
+                           true_fn=lambda: weight * (1.0-mask),
+                           false_fn=lambda: weight)
+            return image, mask, weight
+
         def _concat_mask_weight(image, mask, weight):
             mask_and_weight = tf.concat((mask, weight), axis=2)
             return image, mask_and_weight
@@ -334,7 +342,9 @@ class Dataset(object):
         num_parallel_calls = 8
         dataset_train = dataset_train.shuffle(batch_size*10)
         dataset_train = dataset_train.map(_load_normalize, num_parallel_calls)
-        dataset_train = dataset_train.filter(_filter_rect)
+
+        if filter_vert_hori:
+            dataset_train = dataset_train.filter(_filter_vert_hori)
 
         if augment_dict is not None and augment_dict['mixup'] is not None:
             dataset_train = dataset_train.batch(2)
@@ -343,6 +353,10 @@ class Dataset(object):
         dataset_train = dataset_train.map(_create_weight, num_parallel_calls)
         dataset_train = dataset_train.map(_adjust, num_parallel_calls)
         dataset_train = dataset_train.map(_augment, num_parallel_calls)
+
+        if ignore_tiny is not None and ignore_tiny > 0.0:
+            dataset_train = dataset_train.map(_ignore_tiny, num_parallel_calls)
+
         dataset_train = dataset_train.map(_concat_mask_weight)
         dataset_train = dataset_train.repeat(repeat)
         dataset_train = dataset_train.batch(batch_size)

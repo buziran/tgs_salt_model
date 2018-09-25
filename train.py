@@ -55,6 +55,7 @@ def train(dataset):
         iter_train, iter_valid = dataset.gen_train_valid(
             n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, adjust=FLAGS.adjust,
             weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
+            filter_vert_hori=FLAGS.filter_vert_hori, ignore_tiny=FLAGS.ignore_tiny,
             augment_dict=augment_dict())
 
     sess = tf.Session(config=tf.ConfigProto(
