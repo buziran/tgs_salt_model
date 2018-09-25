@@ -137,6 +137,17 @@ class Dataset(object):
             mask = load_img(path_mask, channels=1)
             return normalize(image), normalize(mask)
 
+        def _filter_rect(image, mask):
+            is_filled = tf.reduce_all(tf.equal(mask, 1.0))
+            is_empty = tf.reduce_all(tf.equal(mask, 0.0))
+            is_uniform = tf.logical_or(is_filled, is_empty)
+            vert_mean = tf.reduce_mean(mask, axis=0)
+            hori_mean = tf.reduce_mean(mask, axis=1)
+            is_vertical = tf.reduce_all(tf.logical_xor(tf.equal(vert_mean, 0.0), tf.equal(vert_mean, 1.0)))
+            is_horizontal = tf.reduce_all(tf.logical_xor(tf.equal(hori_mean, 0.0), tf.equal(hori_mean, 1.0)))
+            is_vert_or_hori = tf.logical_or(is_vertical, is_horizontal)
+            return tf.logical_or(is_uniform, tf.logical_not(is_vert_or_hori))
+
         def _create_weight(image, mask):
             weight = tf.ones_like(mask, dtype=tf.float32)
             if weight_fg == 1.0 and weight_bg == 1.0 and weight_adaptive is None:
@@ -323,6 +334,7 @@ class Dataset(object):
         num_parallel_calls = 8
         dataset_train = dataset_train.shuffle(batch_size*10)
         dataset_train = dataset_train.map(_load_normalize, num_parallel_calls)
+        dataset_train = dataset_train.filter(_filter_rect)
 
         if augment_dict is not None and augment_dict['mixup'] is not None:
             dataset_train = dataset_train.batch(2)
