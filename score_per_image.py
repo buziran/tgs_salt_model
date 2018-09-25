@@ -77,7 +77,6 @@ def main(argv):
         y_true = np.round(y_true / 65535.).astype(int)
         y_pred_path = os.path.join(FLAGS.prediction, os.path.splitext(valid_id)[0] + ".npz")
         y_pred = load_npz(y_pred_path)
-        y_pred = np.round(y_pred).astype(int)
         score = mean_score_per_image(y_true, y_pred, threshold=FLAGS.threshold)
         coverage_true = np.sum(y_true) / float(ORIG_WIDTH * ORIG_HEIGHT)
         coverage_pred = np.sum(y_pred) / float(ORIG_WIDTH * ORIG_HEIGHT)
