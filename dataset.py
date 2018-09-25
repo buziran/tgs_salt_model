@@ -344,7 +344,7 @@ class Dataset(object):
             return image, mask_and_weight
 
         num_parallel_calls = 8
-        dataset_train = dataset_train.shuffle(batch_size*100)
+        dataset_train = dataset_train.shuffle(len(id_train))
         dataset_train = dataset_train.map(_load_normalize, num_parallel_calls)
 
         if filter_vert_hori:
