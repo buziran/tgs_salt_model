@@ -34,7 +34,7 @@ flags.DEFINE_float(
 
 FLAGS = flags.FLAGS
 
-N_SPLITS = 10
+N_SPLITS = 5
 
 
 def list_image(path_input):

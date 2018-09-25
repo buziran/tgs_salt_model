@@ -366,6 +366,7 @@ class Dataset(object):
         dataset_train = dataset_train.batch(batch_size)
         dataset_train = dataset_train.prefetch(1)
 
+        dataset_valid = dataset_valid.shuffle(len(id_valid), seed=17)
         dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls)
 
         if filter_vert_hori:
