@@ -7,11 +7,11 @@ import sys
 from absl import app, flags
 from sklearn.metrics import confusion_matrix
 from PIL import Image
-from sklearn.model_selection import KFold
 from tqdm import tqdm
 import pandas as pd
 
 from constant import *
+from dataset import Dataset
 from metrics import mean_score_per_image
 
 flags.DEFINE_string(
@@ -48,20 +48,9 @@ def load_npz(path_pred):
     return npzfile['arr_0']
 
 
-def split_train_valid(sample_ids, n_splits, idx_kfold):
-    kf = KFold(n_splits)
-    num_samples = len(sample_ids)
-    for idx, (train_index, valid_index) in enumerate(kf.split(range(num_samples))):
-        if idx == idx_kfold:
-            break
-    train_ids = np.array(sample_ids)[train_index]
-    valid_ids = np.array(sample_ids)[valid_index]
-    return train_ids, valid_ids
-
-
 def main(argv):
-    sample_ids = list_image(FLAGS.input)
-    train_ids, valid_ids = split_train_valid(sample_ids, N_SPLITS, FLAGS.cv)
+    dataset = Dataset(FLAGS.input)
+    train_ids, valid_ids = dataset.kfold_split(N_SPLITS, FLAGS.cv)
 
     if not os.path.isdir(FLAGS.score):
         os.makedirs(FLAGS.score)
