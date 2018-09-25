@@ -58,23 +58,27 @@ class Dataset(object):
     def __len__(self):
         return len(self.id_samples)
 
+    def _get_fg_sum(self, id_samples):
+        paths_y = [os.path.join(self.path_input, 'masks', idx) for idx in self.id_samples]
+        return {idx:np.sum(cv2.imread(os.path.join(self.path_input, 'masks', idx), cv2.IMREAD_GRAYSCALE)) for idx in id_samples}
+
     def kfold_split(self, n_splits, idx_kfold):
         assert n_splits > idx_kfold
-        kf = KFold(n_splits)
-        train_index = []
-        valid_index = []
-        for idx, (_train_index, _valid_index) in enumerate(kf.split(range(len(self)))):
-            if idx == idx_kfold:
-                train_index = _train_index
-                valid_index = _valid_index
-                break
-        id_train = np.asarray(self.id_samples)[train_index]
-        id_valid = np.asarray(self.id_samples)[valid_index]
+        id_samples = np.array(self.id_samples)
+        fg_sum = self._get_fg_sum(id_samples)
+        id_samples = np.array(sorted(id_samples, key=lambda idx: (fg_sum[idx], idx)))
+        num_samples = len(self)
+        valid_index = range(idx_kfold, num_samples, n_splits)
+        train_index = list(set(range(num_samples)) - set(valid_index))
+        id_train = id_samples[train_index]
+        id_valid = id_samples[valid_index]
         return id_train, id_valid
 
     def len_train_valid(self, n_splits, idx_kfold):
-        id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
-        return len(id_train), len(id_valid)
+        num_samples = len(self)
+        valid_index = np.arange(idx_kfold, num_samples, n_splits)
+        train_index = list(set(np.arange(num_samples)) - set(valid_index))
+        return len(train_index), len(valid_index)
 
     def gen_test(self, adjust='resize', batch_size=32, repeat=1, with_path=True):
 
@@ -340,7 +344,7 @@ class Dataset(object):
             return image, mask_and_weight
 
         num_parallel_calls = 8
-        dataset_train = dataset_train.shuffle(batch_size*10)
+        dataset_train = dataset_train.shuffle(batch_size*100)
         dataset_train = dataset_train.map(_load_normalize, num_parallel_calls)
 
         if filter_vert_hori:
