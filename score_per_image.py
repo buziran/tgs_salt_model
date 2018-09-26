@@ -83,13 +83,15 @@ def main(argv):
     # grouped = df.groupby(ind)
 
     df = df.sort_values('coverage_true')
-    bins = np.arange(0, 1.0, 0.05)
+    bins = np.arange(0, 1.0001, 0.05)
     bins = np.concatenate(([-1e-4], bins))
 
     grouped = df.groupby(pd.cut(df['coverage_true'], bins))
 
     path_out = os.path.join(FLAGS.score, "mean.csv")
     mean_df = grouped.mean()
+    count_se = grouped["score"].count().rename('count')
+    mean_df['count'] = count_se
     mean_df.to_csv(path_out)
 
     path_out = os.path.join(FLAGS.score, "var.csv")
