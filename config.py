@@ -19,5 +19,7 @@ tf.flags.DEFINE_enum(
     'loss', 'bce-dice', enum_values=['bce', 'bce-dice', 'lovasz', 'lovasz-dice'], help="""loss type""")
 
 tf.flags.DEFINE_enum(
-    'lovasz_pattern', 'elu(error)', enum_values=['elu(error)', 'elu(error+1)', 'elu(error+5)', 'elu(error)+1'], help="""loss type""")
+    'lovasz_pattern', 'elu(error)+1',
+    enum_values=['elu(error)', 'elu(error+1)', 'elu(error+5)', 'elu(error)+1', 'elu(error+1)+1'],
+    help="""lovasz loss pattern""")
 
