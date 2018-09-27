@@ -5,6 +5,8 @@ import numpy as np
 
 from LovaszSoftmax.tensorflow.lovasz_losses_tf import lovasz_grad
 
+FLAGS = tf.flags.FLAGS
+
 
 def _mean_iou(y_true, y_pred):
     prec = []
@@ -176,7 +178,16 @@ def lovasz_hinge_flat(logits, labels, weights=None):
         errors_sorted, perm = tf.nn.top_k(errors, k=tf.shape(errors)[0], name="descending_sort")
         gt_sorted = tf.gather(labelsf, perm)
         grad = lovasz_grad(gt_sorted)
-        loss = tf.tensordot(tf.nn.elu(errors_sorted)+1.0, tf.stop_gradient(grad), 1, name="loss_non_void")
+        if FLAGS.lovasz_pattern == "elu(error)":
+            loss = tf.tensordot(tf.nn.elu(errors_sorted), tf.stop_gradient(grad), 1, name="loss_non_void")
+        elif FLAGS.lovasz_pattern == "elu(error+1)":
+            loss = tf.tensordot(tf.nn.elu(errors_sorted+1.0), tf.stop_gradient(grad), 1, name="loss_non_void")
+        elif FLAGS.lovasz_pattern == "elu(error+5)":
+            loss = tf.tensordot(tf.nn.elu(errors_sorted+5.0), tf.stop_gradient(grad), 1, name="loss_non_void")
+        elif FLAGS.lovasz_pattern == "elu(error)+1":
+            loss = tf.tensordot(tf.nn.elu(errors_sorted)+1.0, tf.stop_gradient(grad), 1, name="loss_non_void")
+        else:
+            raise ValueError("lovasz pattern {} is invalid".format(FLAGS.lovasz_pattern))
         return loss
 
     # deal with the void prediction case (only void pixels)
