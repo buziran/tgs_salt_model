@@ -16,7 +16,7 @@ tf.flags.DEFINE_integer(
     'batch_size', 32, """batch size""")
 
 tf.flags.DEFINE_enum(
-    'loss', 'bce-dice', enum_values=['bce', 'bce-dice', 'lovasz', 'lovasz-dice'], help="""loss type""")
+    'loss', 'bce-dice', enum_values=['bce', 'bce-dice', 'lovasz', 'lovasz-dice', 'lovasz-inv', 'lovasz-double'], help="""loss type""")
 
 tf.flags.DEFINE_enum(
     'lovasz_pattern', 'elu(error)+1',

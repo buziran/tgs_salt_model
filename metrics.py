@@ -120,6 +120,19 @@ def weighted_lovasz_hinge(y_true_and_weight, y_logits):
     return lovasz
 
 
+def weighted_lovasz_hinge_inversed(y_true_and_weight, y_logits):
+    y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
+    lovasz = lovasz_hinge(-y_logits, 1.-y_true, weight)
+    return lovasz
+
+
+def weighted_lovasz_hinge_double(y_true_and_weight, y_logits):
+    y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
+    lovasz = lovasz_hinge(y_logits, y_true, weight)
+    lovasz_inv = lovasz_hinge(-y_logits, 1.-y_true, weight)
+    return (lovasz + lovasz_inv)/2.
+
+
 def weighted_lovasz_dice_loss(y_true_and_weight, y_logits):
     lovasz = weighted_lovasz_hinge(y_true_and_weight, y_logits)
     y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)

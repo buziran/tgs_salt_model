@@ -10,7 +10,8 @@ import resnet50
 import densenet
 
 from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy, \
-    l2_loss, weighted_lovasz_hinge, weighted_lovasz_dice_loss
+    l2_loss, weighted_lovasz_hinge, weighted_lovasz_dice_loss, weighted_lovasz_hinge_inversed, \
+    weighted_lovasz_hinge_double
 from util import get_metrics
 
 
@@ -227,6 +228,10 @@ def compile_model(model, optimizer='adam', loss='bce-dice', dice=False, weight_d
         _loss = weighted_lovasz_hinge
     elif loss == 'lovasz-dice':
         _loss = weighted_lovasz_dice_loss
+    elif loss == 'lovasz-inv':
+        _loss = weighted_lovasz_hinge_inversed
+    elif loss == 'lovasz-double':
+        _loss = weighted_lovasz_hinge_double
 
     if weight_decay != 0.0:
         _l2_loss = l2_loss(weight_decay, exclude_bn)
