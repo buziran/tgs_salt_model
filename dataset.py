@@ -119,6 +119,61 @@ class Dataset(object):
         iter_test = dataset_test.make_one_shot_iterator()
         return iter_test
 
+    def gen_valid(self, n_splits, idx_kfold, adjust='resize', batch_size=32, repeat=1, with_path=True):
+        id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
+
+        paths_valid_x = [os.path.join(self.path_input, 'images', idx) for idx in id_valid]
+        paths_valid_y = [os.path.join(self.path_input, 'masks', idx) for idx in id_valid]
+
+        dataset_valid_x = tf.data.Dataset.from_tensor_slices(paths_valid_x)
+        dataset_valid_y = tf.data.Dataset.from_tensor_slices(paths_valid_y)
+        dataset_valid  = tf.data.Dataset.zip((dataset_valid_x, dataset_valid_y))
+
+        if with_path:
+            def _load_normalize(path_image, path_mask):
+                image = load_img(path_image, channels=IM_CHAN)
+                mask = load_img(path_mask, channels=1)
+                return normalize(image), normalize(mask), path_image
+
+            def _adjust(image, mask, path_image):
+                if adjust == 'never':
+                    return image, mask, path_image
+                elif adjust == 'resize':
+                    image = resize(image, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
+                    mask = resize(mask, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
+                elif adjust in ['reflect', 'constant', 'symmetric']:
+                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
+                    mask = pad(mask, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
+                else:
+                    raise ValueError("adjust-mode {} is not supported".format(adjust))
+                return image, mask, path_image
+        else:
+            def _load_normalize(path_image, path_mask):
+                image = load_img(path_image, channels=IM_CHAN)
+                mask = load_img(path_mask, channels=IM_CHAN)
+                return normalize(image), normalize(mask)
+
+            def _adjust(image, mask):
+                if adjust == 'never':
+                    return image, mask
+                elif adjust == 'resize':
+                    image = resize(image, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
+                    mask = resize(mask, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.BILINEAR)
+                elif adjust in ['reflect', 'constant', 'symmetric']:
+                    image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
+                    mask = pad(mask, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
+                else:
+                    raise ValueError("adjust-mode {} is not supported".format(adjust))
+                return image, mask
+
+        dataset_valid = dataset_valid.map(_load_normalize, num_parallel_calls=8)
+        dataset_valid = dataset_valid.map(_adjust, num_parallel_calls=8)
+        dataset_valid = dataset_valid.repeat(repeat)
+        dataset_valid = dataset_valid.batch(batch_size)
+
+        iter_valid = dataset_valid.make_one_shot_iterator()
+        return iter_valid
+
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
                         batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, augment_dict=None, repeat=None):
