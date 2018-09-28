@@ -186,6 +186,8 @@ def lovasz_hinge_flat(logits, labels, weights=None):
             loss = tf.tensordot(tf.nn.elu(errors_sorted+5.0), tf.stop_gradient(grad), 1, name="loss_non_void")
         elif FLAGS.lovasz_pattern == "elu(error)+1":
             loss = tf.tensordot(tf.nn.elu(errors_sorted)+1.0, tf.stop_gradient(grad), 1, name="loss_non_void")
+        elif FLAGS.lovasz_pattern == "elu(error+1)+1":
+            loss = tf.tensordot(tf.nn.elu(errors_sorted+1.0)+1.0, tf.stop_gradient(grad), 1, name="loss_non_void")
         else:
             raise ValueError("lovasz pattern {} is invalid".format(FLAGS.lovasz_pattern))
         return loss
