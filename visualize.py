@@ -7,11 +7,11 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.models import load_model
 import tensorflow.keras.backend as K
+from tensorflow.python.framework.errors_impl import OutOfRangeError
 from tqdm import tnrange, tqdm_notebook, tqdm
 import matplotlib.pyplot as plt
-
 from util import load_npz
-from input import Dataset
+from dataset import Dataset
 from metrics import mean_iou, mean_score, mean_score_per_image
 from constant import *
 
@@ -32,11 +32,14 @@ tf.flags.DEFINE_string(
     'visualize', '../output/visualize',
     """path to prediction directory""")
 
+tf.flags.DEFINE_integer(
+    'cv', 0, help="""index of k-fold cross validation. index must be in 0~9""")
+
 FLAGS = tf.flags.FLAGS
 
 
 def create_image(x, y_true, y_pred, id, path_out, title=None):
-    x = np.reshape(x, (ORIG_WIDTH, ORIG_HEIGHT)).astype(np.uint8)
+    x = np.reshape(x, (ORIG_WIDTH, ORIG_HEIGHT, IM_CHAN)).astype(np.uint8)
     y_true = np.reshape(y_true, (ORIG_WIDTH, ORIG_HEIGHT)).astype(np.uint8)
     y_pred = np.reshape(y_pred, (ORIG_WIDTH, ORIG_HEIGHT)).astype(np.uint8)
 
@@ -86,15 +89,28 @@ def main(argv=None):
     tf.gfile.MakeDirs(FLAGS.visualize)
 
     dataset = Dataset(FLAGS.input)
-    dataset.load_test(adjust='never')
-    id_samples = dataset.id_samples
-    X_samples = dataset.X_samples
-    Y_samples = dataset.Y_samples
+    iter_valid = dataset.gen_valid(n_splits=N_SPLITS, idx_kfold=FLAGS.cv, adjust='never', with_path=True, repeat=1)
 
-    pred_filenames = [id.replace('png', 'npz') for id in id_samples]
-    pred_samples = load_preds(FLAGS.prediction, pred_filenames)
+    X_valids = []
+    Y_valids = []
+    path_valids = []
+    with tf.Session(config=tf.ConfigProto(device_count={'GPU': 0})) as sess:
+        try:
+            while True:
+                xs, ys, ids = sess.run(iter_valid.get_next())
+                X_valids.append(xs)
+                Y_valids.append(ys)
+                path_valids.extend(ids)
+        except OutOfRangeError:
+            pass
+    X_valids = np.concatenate(X_valids)
+    Y_valids = np.concatenate(Y_valids)
+    id_valids = [os.path.basename(id.decode('utf-8')) for id in path_valids]
 
-    for id, x, y_true, y_pred in tqdm(zip(id_samples, X_samples, Y_samples, pred_samples), total=id_samples.shape[0]):
+    pred_filenames = [os.path.basename(id.replace('png', 'npz')) for id in id_valids]
+    pred_valids = load_preds(FLAGS.prediction, pred_filenames)
+
+    for id, x, y_true, y_pred in tqdm(zip(id_valids, X_valids, Y_valids, pred_valids), total=len(id_valids)):
         path_out = os.path.join(FLAGS.visualize, id)
 
         # Make tile
@@ -102,7 +118,7 @@ def main(argv=None):
         title = "id:{}, score:{}".format(id, score)
 
         create_image(
-            x, np.clip(y_true * 255, 0, 255), np.clip(y_pred * 255, 0, 255), id, path_out, title=title)
+            np.clip(x * 255, 0, 255), np.clip(y_true * 255, 0, 255), np.clip(y_pred * 255, 0, 255), id, path_out, title=title)
     print("Finish visualize of validation data")
 
 
