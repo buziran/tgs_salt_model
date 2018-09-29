@@ -220,7 +220,7 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0):
     return model
 
 
-def compile_model(model, optimizer='adam', loss='bce-dice', dice=False, weight_decay=0.0, exclude_bn=True):
+def compile_model(model, optimizer='adam', loss='bce-dice', threshold=0.5, dice=False, weight_decay=0.0, exclude_bn=True):
     if loss == 'bce':
         _loss = weighted_binary_crossentropy
     elif loss == 'bce-dice':
@@ -242,7 +242,7 @@ def compile_model(model, optimizer='adam', loss='bce-dice', dice=False, weight_d
 
     if optimizer == ('msgd'):
         optimizer = optimizers.SGD(momentum=0.9)
-    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
+    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics(threshold))
     return model
 
 

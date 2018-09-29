@@ -50,13 +50,13 @@ def eval(dataset):
 
             model = load_model(path_model, compile=False)
 
-            threshold = 0.5
+            threshold = FLAGS.threshold
             if FLAGS.best_threshold:
                 print("Searching best threshold for validation data")
                 threshold = search_best_threshod(model, sess, iter_valid, steps_valid)
                 print("Best threshold is {}".format(threshold))
 
-            model = compile_model(model, optimizer="adam", loss=FLAGS.loss)
+            model = compile_model(model, optimizer="adam", loss=FLAGS.loss, threshold=threshold)
 
             sess.run([iter_train.initializer, iter_valid.initializer])
             metrics = model.evaluate(x=iter_train, steps=steps_train)

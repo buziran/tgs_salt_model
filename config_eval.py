@@ -12,5 +12,8 @@ tf.flags.DEFINE_float(
 tf.flags.DEFINE_list(
     'weight_ad', None, """threshold of foreground coverage to apply weight ex) --weight_ad=0.1,0.5""")
 
+tf.flags.DEFINE_float(
+    'threshold', 0.5, """threshold of confidence""")
+
 tf.flags.DEFINE_bool(
     'best_threshold', True, """whether to search best threshold""")
