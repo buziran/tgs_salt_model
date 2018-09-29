@@ -47,16 +47,26 @@ def RLenc(img, order='F', format=True):
 
 
 class StepDecay(object):
-    def __init__(self, lr, decay, epochs_decay=10, freeze_once=False):
+    def __init__(self, lr, decay, epochs_decay='10', freeze_once=False):
         self.lr = lr
         self.decay = decay
+        if ',' in epochs_decay:
+            epochs_decay = epochs_decay.split(',')
+            if epochs_decay[-1] == '':
+                epochs_decay = epochs_decay[:-1]
+            epochs_decay = np.array([int(e) for e in epochs_decay])
+        else:
+            epochs_decay = int(epochs_decay)
         self.epochs_decay = epochs_decay
         self.freeze_once = freeze_once
 
     def __call__(self, epoch):
        if self.freeze_once and epoch == 0:
            return 0.0
-       lr_cur = self.lr * math.pow(self.decay, math.floor((1+epoch)/self.epochs_decay))
+       if isinstance(self.epochs_decay, np.ndarray):
+           lr_cur = self.lr * math.pow(self.decay, np.sum(self.epochs_decay <= epoch+1))
+       else:
+           lr_cur = self.lr * math.pow(self.decay, math.floor((1+epoch)/self.epochs_decay))
        return lr_cur
 
 

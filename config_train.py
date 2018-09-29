@@ -36,8 +36,8 @@ tf.flags.DEFINE_bool(
 tf.flags.DEFINE_bool(
     'freeze_once', False, """whether to freeze learning rate once""")
 
-tf.flags.DEFINE_integer(
-    'epochs_decay', 10, help="""decay epoch of learning rate""")
+tf.flags.DEFINE_string(
+    'epochs_decay', '10', help="""decay epoch of learning rate""")
 
 tf.flags.DEFINE_float(
     'weight_fg', 1.0, """weight of foreground mask""")
