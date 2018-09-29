@@ -3,6 +3,7 @@
 
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
+from tensorflow.python.keras import optimizers
 from tensorflow.python.keras.backend import tile
 from tensorflow.python.keras.models import load_model as _load_model
 from tensorflow.keras.applications import inception_resnet_v2
@@ -238,6 +239,9 @@ def compile_model(model, optimizer='adam', loss='bce-dice', dice=False, weight_d
         loss = lambda true, pred: _loss(true, pred) + _l2_loss
     else:
         loss = _loss
+
+    if optimizer == ('msgd'):
+        optimizer = optimizers.SGD(momentum=0.9)
     model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics())
     return model
 

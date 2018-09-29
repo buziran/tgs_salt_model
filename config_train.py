@@ -19,7 +19,7 @@ tf.flags.DEFINE_string('restore', None, """path to model directory to restore"""
 
 tf.flags.DEFINE_enum(
     'opt', 'adam',
-    enum_values=['sgd', 'rmsprop', 'adagrad', 'adadelta', 'adam', 'adamax', 'nadam'], help="""optimizer""")
+    enum_values=['sgd', 'rmsprop', 'adagrad', 'adadelta', 'adam', 'adamax', 'nadam', 'msgd'], help="""optimizer""")
 
 tf.flags.DEFINE_float(
     'lr', 0.001, help="""initial value of learning rate""")
