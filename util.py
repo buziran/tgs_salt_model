@@ -1,5 +1,4 @@
 import math
-
 import functools
 from tensorflow.python.keras.callbacks import TensorBoard
 import tensorflow.keras.backend as K
@@ -68,6 +67,33 @@ class StepDecay(object):
        else:
            lr_cur = self.lr * math.pow(self.decay, math.floor((1+epoch)/self.epochs_decay))
        return lr_cur
+
+
+class CLRDecay(object):
+    def __init__(self, lr, max_lr, epoch_size=10, gamma=0.9994, mode='triangular', freeze_once=False):
+        self.lr = lr
+        self.max_lr = max_lr
+        self.epoch_size = epoch_size
+        self.gamma = gamma
+        self.mode = mode
+        self.freeze_once = freeze_once
+
+    def __call__(self, epoch):
+        if self.freeze_once and epoch == 0:
+            return 0.0
+        lr = self.lr
+        max_lr = self.max_lr
+        epoch_size = self.epoch_size
+        gamma = self.gamma
+        cycle = math.floor(1 + epoch / (2 * epoch_size))
+        x = abs(epoch / epoch_size - 2 * cycle + 1)
+        clr = lr + (max_lr - lr) * max(0, 1 - x)
+
+        if self.mode == 'triangular2':
+            clr = clr / pow(2, cycle - 1)
+        if self.mode == 'exp_range':
+            clr = clr * pow(gamma, epoch)
+        return clr
 
 
 class MyTensorBoard(TensorBoard):

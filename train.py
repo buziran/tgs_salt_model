@@ -14,7 +14,7 @@ from tensorflow.keras.models import load_model
 from model import build_model, build_model_ref, build_model_pretrained, compile_model
 from dataset import Dataset
 from constant import *
-from util import StepDecay, MyTensorBoard, write_summary
+from util import StepDecay, MyTensorBoard, write_summary, CLRDecay
 import config_train
 
 FLAGS = tf.flags.FLAGS
@@ -91,8 +91,13 @@ def train(dataset):
 
     checkpointer = ModelCheckpoint(path_model, monitor='val_weighted_mean_score', verbose=1, save_best_only=True, mode='max')
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)
-    lrscheduler = LearningRateScheduler(
-        StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay, FLAGS.freeze_once), verbose=1)
+    if FLAGS.cyclic is None:
+        lrscheduler = LearningRateScheduler(
+            StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay, FLAGS.freeze_once), verbose=1)
+    else:
+        lrscheduler = LearningRateScheduler(
+            CLRDecay(FLAGS.lr, max_lr=FLAGS.lr*5,
+                     epoch_size=FLAGS.cyclic, mode='triangular2', freeze_once=FLAGS.freeze_once), verbose=1)
 
     callbacks = [checkpointer, tensorboarder, lrscheduler]
     if FLAGS.early_stopping:

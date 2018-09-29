@@ -27,6 +27,9 @@ tf.flags.DEFINE_float(
 tf.flags.DEFINE_float(
     'lr_decay', 1.0, help="""decay factor for learning rate""")
 
+tf.flags.DEFINE_integer(
+    'cyclic', None, help="""epoch-size for cyclic learning rate""")
+
 tf.flags.DEFINE_float(
     'weight_decay', 0.0, help="""weight decay""")
 
