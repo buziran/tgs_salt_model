@@ -96,8 +96,8 @@ def train(dataset):
             StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay, FLAGS.freeze_once), verbose=1)
     else:
         lrscheduler = LearningRateScheduler(
-            CLRDecay(FLAGS.lr, max_lr=FLAGS.lr*5,
-                     epoch_size=FLAGS.cyclic, mode='triangular2', freeze_once=FLAGS.freeze_once), verbose=1)
+            CLRDecay(FLAGS.lr, max_lr=FLAGS.max_lr,
+                     epoch_size=FLAGS.epoch_size, mode=FLAGS.mode_clr, freeze_once=FLAGS.freeze_once), verbose=1)
 
     callbacks = [checkpointer, tensorboarder, lrscheduler]
     if FLAGS.early_stopping:

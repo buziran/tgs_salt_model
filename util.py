@@ -70,9 +70,9 @@ class StepDecay(object):
 
 
 class CLRDecay(object):
-    def __init__(self, lr, max_lr, epoch_size=10, gamma=0.9994, mode='triangular', freeze_once=False):
+    def __init__(self, lr, max_lr=None, epoch_size=10, gamma=0.9994, mode='triangular', freeze_once=False):
         self.lr = lr
-        self.max_lr = max_lr
+        self.max_lr = max_lr if max_lr is not None else lr * 5.0
         self.epoch_size = epoch_size
         self.gamma = gamma
         self.mode = mode

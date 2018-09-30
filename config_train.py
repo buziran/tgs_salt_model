@@ -9,38 +9,7 @@ tf.flags.DEFINE_string(
 tf.flags.DEFINE_integer(
     'epochs', 300, """path to log directory""")
 
-tf.flags.DEFINE_bool(
-    'early_stopping', False, help="""whether to apply early-stopping""")
-
-tf.flags.DEFINE_bool(
-    'reduce_on_plateau', False, help="""whether to reduce learning rate on plateau""")
-
 tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
-
-tf.flags.DEFINE_enum(
-    'opt', 'adam',
-    enum_values=['sgd', 'rmsprop', 'adagrad', 'adadelta', 'adam', 'adamax', 'nadam', 'msgd'], help="""optimizer""")
-
-tf.flags.DEFINE_float(
-    'lr', 0.001, help="""initial value of learning rate""")
-
-tf.flags.DEFINE_float(
-    'lr_decay', 1.0, help="""decay factor for learning rate""")
-
-tf.flags.DEFINE_integer(
-    'cyclic', None, help="""epoch-size for cyclic learning rate""")
-
-tf.flags.DEFINE_float(
-    'weight_decay', 0.0, help="""weight decay""")
-
-tf.flags.DEFINE_bool(
-    'exclude_bn', True, help="""exclude parameter of batch normalization from l2 loss""")
-
-tf.flags.DEFINE_bool(
-    'freeze_once', False, """whether to freeze learning rate once""")
-
-tf.flags.DEFINE_string(
-    'epochs_decay', '10', help="""decay epoch of learning rate""")
 
 tf.flags.DEFINE_float(
     'weight_fg', 1.0, """weight of foreground mask""")
@@ -53,6 +22,49 @@ tf.flags.DEFINE_list(
 
 tf.flags.DEFINE_bool(
     'debug', False, "Run as debug mode")
+
+"""Optimize"""
+
+tf.flags.DEFINE_enum(
+    'opt', 'adam',
+    enum_values=['sgd', 'rmsprop', 'adagrad', 'adadelta', 'adam', 'adamax', 'nadam', 'msgd'], help="""optimizer""")
+
+tf.flags.DEFINE_float(
+    'lr', 0.001, help="""initial value of learning rate""")
+
+tf.flags.DEFINE_float(
+    'lr_decay', 1.0, help="""decay factor for learning rate""")
+
+tf.flags.DEFINE_string(
+    'epochs_decay', '10', help="""decay epoch of learning rate""")
+
+tf.flags.DEFINE_bool(
+    'cyclic', False, help="""whether to use cyclic learning rate""")
+
+tf.flags.DEFINE_integer(
+    'epoch_size', None, help="""[cyclic lr] epoch-size for cyclic learning rate""")
+
+tf.flags.DEFINE_float(
+    'max_lr', None, help="""[cyclic lr] max learning rate for cyclic learning rate""")
+
+tf.flags.DEFINE_enum(
+    'mode_clr', "triangular2", enum_values=['triangular', 'triangular2'],
+    help="""[cyclic lr] max learning rate for cyclic learning rate""")
+
+tf.flags.DEFINE_float(
+    'weight_decay', 0.0, help="""weight decay""")
+
+tf.flags.DEFINE_bool(
+    'exclude_bn', True, help="""exclude parameter of batch normalization from l2 loss""")
+
+tf.flags.DEFINE_bool(
+    'freeze_once', False, """whether to freeze learning rate once""")
+
+tf.flags.DEFINE_bool(
+    'early_stopping', False, help="""whether to apply early-stopping""")
+
+tf.flags.DEFINE_bool(
+    'reduce_on_plateau', False, help="""whether to reduce learning rate on plateau""")
 
 """Dataset"""
 
