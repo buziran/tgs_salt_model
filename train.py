@@ -91,7 +91,7 @@ def train(dataset):
 
     checkpointer = ModelCheckpoint(path_model, monitor='val_weighted_mean_score', verbose=1, save_best_only=True, mode='max')
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)
-    if FLAGS.cyclic is None:
+    if not FLAGS.cyclic:
         lrscheduler = LearningRateScheduler(
             StepDecay(FLAGS.lr, FLAGS.lr_decay, FLAGS.epochs_decay, FLAGS.freeze_once), verbose=1)
     else:
