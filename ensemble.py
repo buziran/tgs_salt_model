@@ -64,6 +64,7 @@ def main(argv):
             dirname = os.path.basename(os.path.dirname(d))
             path_pred = os.path.join(tdir, dirname)
             pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred]
+            print("pred args is {}".format(' '.join(pred_arg)))
             subprocess.run(pred_arg)
             path_preds.append(path_pred)
 
