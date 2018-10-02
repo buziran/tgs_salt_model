@@ -37,8 +37,7 @@ tf.flags.DEFINE_bool(
     """Inference only 10 images""")
 
 tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'resize-cv', 'pad'],
-    help="""mode to adjust image size""")
+    'adjust', 'resize', enum_values=['resize', 'reflect', 'constant', 'symmetric'], help="""mode to adjust image size""")
 
 tf.flags.DEFINE_float(
     'threshold', 0.5, """threshold of confidence to predict foreground""")
