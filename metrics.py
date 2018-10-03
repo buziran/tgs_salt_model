@@ -2,6 +2,7 @@ import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 from tensorflow.keras import backend as K
 import numpy as np
+from tensorflow.python.keras.metrics import binary_accuracy
 
 from LovaszSoftmax.tensorflow.lovasz_losses_tf import lovasz_grad
 
@@ -282,4 +283,24 @@ def l2_loss(weight_decay, exclude_bn):
              if loss_filter_fn(v.name)])
     tf.summary.scalar('l2_loss', _l2_loss)
     return _l2_loss
+
+
+def loss_noempty(loss_fn):
+    def _loss_noempty(y_true_and_weight, y_logits):
+        y_true, weight = tf.split(y_true_and_weight, [1, 1], axis=3)
+        not_empty = tf.cast(tf.greater(tf.reduce_sum(y_true * weight), 0), tf.float32)
+        weight = not_empty * weight
+        y_true_and_weight = tf.concat([y_true, weight], axis=3)
+        return loss_fn(y_true_and_weight, y_logits)
+    return _loss_noempty
+
+
+def bce_with_logits(y_true, y_logits):
+    bce = K.binary_crossentropy(y_true, y_logits, from_logits=True)
+    return bce
+
+
+def accuracy_with_logits(y_true, y_logits):
+    return binary_accuracy(y_true, tf.sigmoid(y_logits))
+
 

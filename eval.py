@@ -39,7 +39,7 @@ def eval(dataset):
         iter_train, iter_valid = dataset.gen_train_valid(
             n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, adjust=FLAGS.adjust,
             weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive, repeat=1,
-            filter_vert_hori=False)
+            filter_vert_hori=False, deep_supervised=FLAGS.deep_supervised)
 
         num_train, num_valid = dataset.len_train_valid(N_SPLITS, FLAGS.cv)
 
@@ -56,20 +56,20 @@ def eval(dataset):
                 threshold = search_best_threshod(model, sess, iter_valid, steps_valid)
                 print("Best threshold is {}".format(threshold))
 
-            model = compile_model(model, optimizer="adam", loss=FLAGS.loss, threshold=threshold)
+            model = compile_model(model, optimizer="adam", loss=FLAGS.loss, threshold=threshold, deep_supervised=FLAGS.deep_supervised)
 
             sess.run([iter_train.initializer, iter_valid.initializer])
             metrics = model.evaluate(x=iter_train, steps=steps_train)
-            print("Training loss:{}, iou:{}, score:{} (threshold={})".format(metrics[0], metrics[1], metrics[2], threshold))
+            print("Training " + ", ".join(["{}:{}".format(n, m) for n, m in zip(model.metrics_names, metrics)]))
             metrics = model.evaluate(x=iter_valid, steps=steps_valid)
-            print("Validation loss:{}, iou:{}, score:{} (threshold={})".format(metrics[0], metrics[1], metrics[2], threshold))
+            print("Validation " + ", ".join(["{}:{}".format(n, m) for n, m in zip(model.metrics_names, metrics)]))
 
 def search_best_threshod(model, sess, iterator, steps):
     # _model = deepcopy(model)
     scores = {}
     for threshold in np.arange(0.0, 1.0001, 0.05):
         sess.run(iterator.initializer)
-        model.compile(optimizer="adam", loss=weighted_bce_dice_loss, metrics=get_metrics(threshold))
+        model = compile_model(model, optimizer="adam", loss='bce', threshold=threshold, deep_supervised=FLAGS.deep_supervised)
         metrics = model.evaluate(x=iterator, steps=steps)
         scores[threshold] = metrics[2]
 

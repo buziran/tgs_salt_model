@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import tensorflow as tf
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 from tensorflow.python.keras import optimizers
@@ -12,7 +13,7 @@ import densenet
 
 from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_loss, weighted_binary_crossentropy, \
     l2_loss, weighted_lovasz_hinge, weighted_lovasz_dice_loss, weighted_lovasz_hinge_inversed, \
-    weighted_lovasz_hinge_double
+    weighted_lovasz_hinge_double, loss_noempty, bce_with_logits, accuracy_with_logits
 from util import get_metrics
 
 
@@ -23,7 +24,7 @@ def conv_block_simple(input, filters, prefix, strides=(1, 1)):
     return conv
 
 
-def get_unet_resnet50(input_shape):
+def get_unet_resnet50(input_shape, with_bottleneck=False):
     inputs = Input(shape=input_shape)
     base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
 
@@ -56,7 +57,10 @@ def get_unet_resnet50(input_shape):
     conv10 = conv_block_simple(up10, 32, "conv10_1")
     conv10 = conv_block_simple(conv10, 32, "conv10_2")
 
-    return inputs, conv10
+    if not with_bottleneck:
+        return inputs, conv10
+    else:
+        return inputs, conv10, conv5
 
 
 def get_unet_densenet121(input_shape):
@@ -108,6 +112,30 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
     outputs = Conv2D(1, (1, 1), name='prediction')(outputs)
     model = Model(inputs=[inputs], outputs=[outputs])
+    return model
+
+
+def build_model_pretrained_deep_supervised(height, width, channels, encoder='resnet50',
+                           spatial_dropout=None):
+    if encoder == 'resnet50':
+        inputs, outputs, bottleneck = get_unet_resnet50([height, width, channels], with_bottleneck=True)
+    else:
+        raise ValueError('encoder {} is not supported'.format(encoder))
+
+    bottleneck = GlobalAveragePooling2D(name="bottleneck_gap")(bottleneck)
+    bottleneck = Dropout(0.5)(bottleneck)
+    fc = Dense(128, activation='relu', name="bottleneck_fc1")(bottleneck)
+    logits_image = Dense(1, name="output_image")(fc)
+    fuse_image = Reshape((1, 1, 1))(logits_image)
+
+    if spatial_dropout is not None:
+        outputs = SpatialDropout2D(spatial_dropout)(outputs)
+
+    logits_pixel = Conv2D(1, (1, 1), name='output_pixel')(outputs)
+
+    fused = concatenate([UpSampling2D([height, width])(fuse_image), logits_pixel])
+    logits_final = Conv2D(1, (1, 1), name='output_final')(fused)
+    model = Model(inputs=[inputs], outputs=[logits_final, logits_pixel, logits_image])
     return model
 
 
@@ -220,7 +248,8 @@ def build_model(height, width, channels, batch_norm=False, drop_out=0.0):
     return model
 
 
-def compile_model(model, optimizer='adam', loss='bce-dice', threshold=0.5, dice=False, weight_decay=0.0, exclude_bn=True):
+def compile_model(model, optimizer='adam', loss='bce-dice', threshold=0.5, dice=False,
+                  weight_decay=0.0, exclude_bn=True, deep_supervised=False):
     if loss == 'bce':
         _loss = weighted_binary_crossentropy
     elif loss == 'bce-dice':
@@ -242,7 +271,17 @@ def compile_model(model, optimizer='adam', loss='bce-dice', threshold=0.5, dice=
 
     if optimizer == ('msgd'):
         optimizer = optimizers.SGD(momentum=0.9)
-    model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics(threshold))
+
+    if not deep_supervised:
+        model.compile(optimizer=optimizer, loss=loss, metrics=get_metrics(threshold))
+    else:
+        loss_pixel = loss_noempty(loss)
+        losses = {'output_final': loss, 'output_pixel': loss_pixel, 'output_image': bce_with_logits}
+        loss_weights = {'output_final': 1, 'output_pixel': 0.1, 'output_image': 0.1}
+        metrics = {
+            'output_final': get_metrics(threshold), 'output_pixel': get_metrics(threshold),
+            'output_image': accuracy_with_logits}
+        model.compile( optimizer=optimizer, loss=losses, loss_weights=loss_weights, metrics=metrics)
     return model
 
 

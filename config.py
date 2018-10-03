@@ -23,3 +23,5 @@ tf.flags.DEFINE_enum(
     enum_values=['elu(error)', 'elu(error+1)', 'elu(error+5)', 'elu(error)+1', 'elu(error+1)+1'],
     help="""lovasz loss pattern""")
 
+tf.flags.DEFINE_bool('deep_supervised', False, """whether to use deep-supervised model""")
+

@@ -176,7 +176,7 @@ class Dataset(object):
 
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
-                        batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, augment_dict=None, repeat=None):
+                        batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, deep_supervised=False, augment_dict=None, repeat=None):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
 
         paths_train_x = [os.path.join(self.path_input, 'images', idx) for idx in id_train]
@@ -398,6 +398,11 @@ class Dataset(object):
             mask_and_weight = tf.concat((mask, weight), axis=2)
             return image, mask_and_weight
 
+        def _create_image_label_and_concat(image, mask, weight):
+            mask_and_weight = tf.concat((mask, weight), axis=2)
+            image_label = tf.cast(tf.greater(tf.reduce_sum(mask), 0), tf.float32)
+            return image, {'output_final':mask_and_weight, 'output_pixel':mask_and_weight, 'output_image':image_label}
+
         num_parallel_calls = 8
         dataset_train = dataset_train.shuffle(len(id_train))
         dataset_train = dataset_train.map(_load_normalize, num_parallel_calls)
@@ -416,7 +421,11 @@ class Dataset(object):
         if ignore_tiny is not None and ignore_tiny > 0.0:
             dataset_train = dataset_train.map(_ignore_tiny, num_parallel_calls)
 
-        dataset_train = dataset_train.map(_concat_mask_weight)
+        if not deep_supervised:
+            dataset_train = dataset_train.map(_concat_mask_weight)
+        else:
+            dataset_train = dataset_train.map(_create_image_label_and_concat)
+
         dataset_train = dataset_train.repeat(repeat)
         dataset_train = dataset_train.batch(batch_size)
         dataset_train = dataset_train.prefetch(1)
@@ -429,7 +438,12 @@ class Dataset(object):
 
         dataset_valid = dataset_valid.map(_create_weight, num_parallel_calls)
         dataset_valid = dataset_valid.map(_adjust, num_parallel_calls)
-        dataset_valid = dataset_valid.map(_concat_mask_weight)
+
+        if not deep_supervised:
+            dataset_valid = dataset_valid.map(_concat_mask_weight)
+        else:
+            dataset_valid = dataset_valid.map(_create_image_label_and_concat)
+
         dataset_valid = dataset_valid.repeat(repeat)
         dataset_valid = dataset_valid.batch(batch_size)
         dataset_valid = dataset_valid.prefetch(1)

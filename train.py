@@ -11,7 +11,8 @@ import tensorflow.keras.backend as K
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.models import load_model
 
-from model import build_model, build_model_ref, build_model_pretrained, compile_model
+from model import build_model, build_model_ref, build_model_pretrained, compile_model, \
+    build_model_pretrained_deep_supervised
 from dataset import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard, write_summary, CLRDecay
@@ -56,7 +57,7 @@ def train(dataset):
             n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, adjust=FLAGS.adjust,
             weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
             filter_vert_hori=FLAGS.filter_vert_hori, ignore_tiny=FLAGS.ignore_tiny,
-            augment_dict=augment_dict())
+            augment_dict=augment_dict(), deep_supervised=FLAGS.deep_supervised)
 
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
@@ -71,9 +72,14 @@ def train(dataset):
             path_restore = os.path.join(FLAGS.restore, NAME_MODEL)
             model = load_model(path_restore, compile=False)
         elif FLAGS.pretrained is not None:
-            model = build_model_pretrained(
-                IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
-                spatial_dropout=FLAGS.spatial_dropout)
+            if not FLAGS.deep_supervised:
+                model = build_model_pretrained(
+                    IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
+                    spatial_dropout=FLAGS.spatial_dropout)
+            else:
+                model = build_model_pretrained_deep_supervised(
+                    IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
+                    spatial_dropout=FLAGS.spatial_dropout)
         elif not FLAGS.use_ref:
             model = build_model(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)
@@ -83,13 +89,17 @@ def train(dataset):
                 depth=FLAGS.depth, start_ch=FLAGS.start_ch)
 
         model = compile_model(model, optimizer=FLAGS.opt, loss=FLAGS.loss,
-                              weight_decay=FLAGS.weight_decay, exclude_bn=FLAGS.exclude_bn)
+                              weight_decay=FLAGS.weight_decay, exclude_bn=FLAGS.exclude_bn, deep_supervised=FLAGS.deep_supervised)
         write_summary(model, os.path.join(FLAGS.model, MODEL_SUMMARY_FILENAME))
         model.summary()
 
     path_model = os.path.join(FLAGS.model, NAME_MODEL)
 
-    checkpointer = ModelCheckpoint(path_model, monitor='val_weighted_mean_score', verbose=1, save_best_only=True, mode='max')
+    if not FLAGS.deep_supervised:
+        monitor = 'val_weighted_mean_score'
+    else:
+        monitor = 'val_output_final_weighted_mean_score'
+    checkpointer = ModelCheckpoint(path_model, monitor=monitor, verbose=1, save_best_only=True, mode='max')
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)
     if not FLAGS.cyclic:
         lrscheduler = LearningRateScheduler(
