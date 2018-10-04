@@ -60,9 +60,9 @@ def eval(dataset):
 
             sess.run([iter_train.initializer, iter_valid.initializer])
             metrics = model.evaluate(x=iter_train, steps=steps_train)
-            print("Training " + ", ".join(["{}:{}".format(n, m) for n, m in zip(model.metrics_names, metrics)]))
+            print("Training " + ", ".join(["{}:{}".format(n, m) for n, m in zip(model.metrics_names, metrics)]) + " (threshold={})".format(threshold))
             metrics = model.evaluate(x=iter_valid, steps=steps_valid)
-            print("Validation " + ", ".join(["{}:{}".format(n, m) for n, m in zip(model.metrics_names, metrics)]))
+            print("Validation " + ", ".join(["{}:{}".format(n, m) for n, m in zip(model.metrics_names, metrics)]) + " (threshold={})".format(threshold))
 
 def search_best_threshod(model, sess, iterator, steps):
     # _model = deepcopy(model)
@@ -71,7 +71,13 @@ def search_best_threshod(model, sess, iterator, steps):
         sess.run(iterator.initializer)
         model = compile_model(model, optimizer="adam", loss='bce', threshold=threshold, deep_supervised=FLAGS.deep_supervised)
         metrics = model.evaluate(x=iterator, steps=steps)
-        scores[threshold] = metrics[2]
+        if not FLAGS.deep_supervised:
+            monitor = 'weighted_mean_score'
+        else:
+            monitor = 'output_final_weighted_mean_score'
+        score = metrics[model.metrics_names.index(monitor)]
+        print("score:{} (threshold={})".format(score, threshold))
+        scores[threshold] = score
 
     print(scores)
     threshold_best = max(scores.items(), key=itemgetter(1))[0]
