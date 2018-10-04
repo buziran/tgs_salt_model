@@ -24,12 +24,11 @@ def conv_block_simple(input, filters, prefix, strides=(1, 1)):
     return conv
 
 
-def get_unet_resnet50(input_shape, with_bottleneck=False):
-    inputs = Input(shape=input_shape)
+def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False):
     base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
 
     for i, layer in enumerate(base_model.layers):
-        layer.trainable = True
+        layer.trainable = retrain
 
     conv1 = base_model.get_layer("activation").output
     conv2 = base_model.get_layer("activation_9").output
@@ -58,18 +57,17 @@ def get_unet_resnet50(input_shape, with_bottleneck=False):
     conv10 = conv_block_simple(conv10, 32, "conv10_2")
 
     if not with_bottleneck:
-        return inputs, conv10
+        return conv10
     else:
-        return inputs, conv10, conv5
+        return conv10, conv5
 
 
-def get_unet_densenet121(input_shape):
-    inputs = Input(shape=input_shape)
+def get_unet_densenet121(input_shape, inputs, retrain=True, with_bottleneck=False):
     base_model = densenet.DenseNet121(
         input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
 
     for i, layer in enumerate(base_model.layers):
-        layer.trainable = True
+        layer.trainable = retrain
 
     conv1 = base_model.get_layer("conv1/relu").output
     conv2 = base_model.get_layer("pool2_conv").output
@@ -97,14 +95,24 @@ def get_unet_densenet121(input_shape):
     conv10 = conv_block_simple(up10, 32, "conv10_1")
     conv10 = conv_block_simple(conv10, 32, "conv10_2")
 
-    return inputs, conv10
+    if not with_bottleneck:
+        return conv10
+    else:
+        return conv10, conv5
 
 def build_model_pretrained(height, width, channels, encoder='resnet50',
-                           spatial_dropout=None):
+                           spatial_dropout=None, preprocess=False, retrain=True):
+    input_shape=[height, width, channels]
+    inputs = Input(shape=input_shape)
+    if preprocess:
+        _inputs = Lambda(lambda x: x*2 - 1.0, name="preprocess")(inputs)
+    else:
+        _inputs = inputs
+
     if encoder == 'resnet50':
-        inputs, outputs = get_unet_resnet50([height, width, channels])
+        outputs = get_unet_resnet50(input_shape, _inputs, retrain=retrain)
     elif encoder == 'densenet121':
-        inputs, outputs = get_unet_densenet121([height, width, channels])
+        outputs = get_unet_densenet121(input_shape, _inputs, retrain=retrain)
     else:
         raise ValueError('encoder {} is not supported'.format(encoder))
 
@@ -116,9 +124,18 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
 
 
 def build_model_pretrained_deep_supervised(height, width, channels, encoder='resnet50',
-                           spatial_dropout=None):
+                           spatial_dropout=None, preprocess=False, retrain=True):
+    input_shape=[height, width, channels]
+    inputs = Input(shape=input_shape)
+    if preprocess:
+        _inputs = Lambda(lambda x: x*2 - 1.0, name="preprocess")(inputs)
+    else:
+        _inputs = inputs
+
     if encoder == 'resnet50':
-        inputs, outputs, bottleneck = get_unet_resnet50([height, width, channels], with_bottleneck=True)
+        outputs, bottleneck = get_unet_resnet50(input_shape, _inputs, retrain=retrain, with_bottleneck=True)
+    elif encoder == 'densenet121':
+        outputs, bottleneck = get_unet_densenet121(input_shape, _inputs, retrain=retrain, with_bottleneck=True)
     else:
         raise ValueError('encoder {} is not supported'.format(encoder))
 

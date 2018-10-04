@@ -75,11 +75,11 @@ def train(dataset):
             if not FLAGS.deep_supervised:
                 model = build_model_pretrained(
                     IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
-                    spatial_dropout=FLAGS.spatial_dropout)
+                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess)
             else:
                 model = build_model_pretrained_deep_supervised(
                     IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
-                    spatial_dropout=FLAGS.spatial_dropout)
+                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess)
         elif not FLAGS.use_ref:
             model = build_model(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)

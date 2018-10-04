@@ -79,6 +79,10 @@ tf.flags.DEFINE_enum(
     'pretrained', None, enum_values=['resnet50', 'inception_resnet_v2', 'densenet121'],
     help="""whether to use batch-normalization""")
 
+tf.flags.DEFINE_bool('retrain', True, """whether to retrain layers in pretrained model""")
+
+tf.flags.DEFINE_bool('preprocess', False, """whether to preprocess image to fit [-1, 1]""")
+
 tf.flags.DEFINE_enum(
     'contrib', None, enum_values=['resnet18', 'resnet34', 'resnet50'],
     help="""contribution model of keras-contrib""")
