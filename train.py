@@ -133,6 +133,9 @@ def debug_img_show(iter_train, iter_valid, sess):
     import matplotlib.pyplot as plt
 
     def show_img_label_mask(images, labels_and_masks, prefix=""):
+        if FLAGS.deep_supervised:
+            labels_and_masks, labels_image = labels_and_masks["output_final"], labels_and_masks["output_image"]
+            print(labels_image)
         num_img = images.shape[0]
         for i, (image, label_and_mask) in enumerate(zip(images, labels_and_masks)):
             print("image.shape is {}".format(image.shape))
