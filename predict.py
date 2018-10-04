@@ -11,6 +11,7 @@ from tqdm import tqdm
 from scipy.misc import imsave
 from skimage.transform import resize
 from skimage.util import crop
+import pandas as pd
 
 from dataset import Dataset
 from metrics import mean_iou, mean_score
@@ -39,7 +40,11 @@ tf.flags.DEFINE_bool(
 tf.flags.DEFINE_enum(
     'adjust', 'resize', enum_values=['resize', 'reflect', 'constant', 'symmetric'], help="""mode to adjust image size""")
 
+tf.flags.DEFINE_bool('deep_supervised', False, """whether to use deep-supervised model""")
+
 FLAGS = tf.flags.FLAGS
+
+FILENAME_IMAGE_PREDS = "image_preds.csv"
 
 
 def save_png(ys_pred, ids, path_out, adjust='resize'):
@@ -90,17 +95,32 @@ def main(argv=None):
 
     num_batch = int(np.ceil(len(dataset) / FLAGS.batch_size))
     sample_tensor = iter_test.get_next()
+    image_preds = {}
     for id_batch in tqdm(range(num_batch)):
         xs, paths = sess.run(sample_tensor)
         ids = np.asarray([os.path.split(path)[1].decode() for path in paths])
 
         if id_batch == num_batch:
             break
-        ys_logits = model.predict_on_batch(xs)
-        ys_pred = sigmoid(ys_logits)
-        save_png(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)
-        if FLAGS.npz:
-            save_npz(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)
+        ys_outputs = model.predict_on_batch(xs)
+        if not FLAGS.deep_supervised:
+            ys_logits = ys_outputs
+            ys_pred = sigmoid(ys_logits)
+            save_png(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)
+            if FLAGS.npz:
+                save_npz(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)
+        else:
+            ys_logits, image_logits = ys_outputs[0], ys_outputs[2]
+            image_pred = sigmoid(image_logits)
+            image_preds.update({i: p for i, p in zip(ids, image_pred)})
+            ys_pred = sigmoid(ys_logits)
+            save_png(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)
+            if FLAGS.npz:
+                save_npz(ys_pred, ids, FLAGS.prediction, FLAGS.adjust)
+
+    if FLAGS.deep_supervised:
+        df_image_preds = pd.DataFrame.from_dict(image_preds, orient='index')
+        df_image_preds.to_csv(os.path.join(FLAGS.prediction, FILENAME_IMAGE_PREDS))
 
 
 if __name__ == '__main__':
