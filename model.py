@@ -122,7 +122,9 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
     else:
         raise ValueError('encoder {} is not supported'.format(encoder))
 
+    # predict whether to image is empty or non-empty
     bottleneck = GlobalAveragePooling2D(name="bottleneck_gap")(bottleneck)
+    bottleneck = Flatten(name="flatten")(bottleneck)
     bottleneck = Dropout(0.5)(bottleneck)
     fc = Dense(128, activation='relu', name="bottleneck_fc1")(bottleneck)
     logits_image = Dense(1, name="output_image")(fc)
@@ -134,6 +136,8 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
     logits_pixel = Conv2D(1, (1, 1), name='output_pixel')(outputs)
 
     fused = concatenate([UpSampling2D([height, width])(fuse_image), logits_pixel])
+    fused = conv_block_simple(fused, 32, "conv_final_1")
+    fused = conv_block_simple(fused, 32, "conv_final_2")
     logits_final = Conv2D(1, (1, 1), name='output_final')(fused)
     model = Model(inputs=[inputs], outputs=[logits_final, logits_pixel, logits_image])
     return model
