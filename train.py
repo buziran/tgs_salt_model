@@ -70,6 +70,7 @@ def train(dataset):
     with tf.device('/gpu:0'):
         if FLAGS.restore is not None:
             path_restore = os.path.join(FLAGS.restore, NAME_MODEL)
+            print("Restoring model from {}".format(path_restore))
             model = load_model(path_restore, compile=False)
         elif FLAGS.pretrained is not None:
             if not FLAGS.deep_supervised:
@@ -90,6 +91,7 @@ def train(dataset):
 
         if FLAGS.restore_weight is not None:
             path_weight = os.path.join(FLAGS.restore_weight, NAME_MODEL)
+            print("Restoring weights from {}".format(path_weight))
             model.load_weights(path_weight, by_name=True)
 
         model = compile_model(model, optimizer=FLAGS.opt, loss=FLAGS.loss,
