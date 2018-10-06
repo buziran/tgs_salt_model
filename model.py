@@ -149,8 +149,9 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
+    logits_pixel = Conv2D(1, (1, 1), name='prediction')(outputs)
+    logits_pixel = Lambda(lambda x: x, name="output_pixel")(logits_pixel)
 
-    logits_pixel = Conv2D(1, (1, 1), name='output_pixel')(outputs)
 
     fused = concatenate([UpSampling2D([height, width])(fuse_image), logits_pixel])
     fused = conv_block_simple(fused, 32, "conv_final_1")
