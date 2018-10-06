@@ -11,6 +11,8 @@ tf.flags.DEFINE_integer(
 
 tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
 
+tf.flags.DEFINE_string('restore_weight', None, """path to weight directory to restore""")
+
 tf.flags.DEFINE_float(
     'weight_fg', 1.0, """weight of foreground mask""")
 

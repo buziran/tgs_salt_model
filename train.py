@@ -88,6 +88,10 @@ def train(dataset):
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out,
                 depth=FLAGS.depth, start_ch=FLAGS.start_ch)
 
+        if FLAGS.restore_weight is not None:
+            path_weight = os.path.join(FLAGS.restore_weight, NAME_MODEL)
+            model.load_weights(path_weight, by_name=True)
+
         model = compile_model(model, optimizer=FLAGS.opt, loss=FLAGS.loss,
                               weight_decay=FLAGS.weight_decay, exclude_bn=FLAGS.exclude_bn, deep_supervised=FLAGS.deep_supervised)
         write_summary(model, os.path.join(FLAGS.model, MODEL_SUMMARY_FILENAME))
