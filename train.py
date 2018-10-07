@@ -139,29 +139,39 @@ def debug_img_show(iter_train, iter_valid, sess):
     import matplotlib.pyplot as plt
 
     def show_img_label_mask(images, labels_and_masks, prefix=""):
+        num_img = images.shape[0]
+        labels_image = None
         if FLAGS.deep_supervised:
             labels_and_masks, labels_image = labels_and_masks["output_final"], labels_and_masks["output_image"]
             print(labels_image)
-        num_img = images.shape[0]
         for i, (image, label_and_mask) in enumerate(zip(images, labels_and_masks)):
             print("image.shape is {}".format(image.shape))
             print("label_and_mask.shape is {}".format(label_and_mask.shape))
             image = np.squeeze(image)
             label = label_and_mask[:,:,0]
             mask = label_and_mask[:,:,1]
-            plt.title(prefix + "image {}/{}".format(i, num_img))
+
+            fig = plt.figure(figsize=(16,8))
+            title = prefix + "{}/{}".format(i+1, num_img)
+            if labels_image is not None:
+                title += " is_not_emtpy: {}".format(int(labels_image[i]))
+            fig.suptitle(title)
+
+            plt.subplot(131)
+            plt.title("image")
             plt.imshow(image, cmap='gray', vmin=0, vmax=1)
             plt.colorbar()
-            plt.show()
 
-            plt.title(prefix + "label {}/{}".format(i, num_img))
+            plt.subplot(132)
+            plt.title("mask")
             plt.imshow(label, cmap='gray', vmin=0, vmax=1)
             plt.colorbar()
-            plt.show()
 
-            plt.title(prefix + "mask {}/{}".format(i, num_img))
+            plt.subplot(133)
+            plt.title("weight")
             plt.imshow(mask, cmap='gray', vmin=0, vmax=np.max(mask))
             plt.colorbar()
+
             plt.show()
 
     images, labels_and_masks = sess.run(iter_train.get_next())
