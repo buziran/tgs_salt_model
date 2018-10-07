@@ -295,7 +295,7 @@ def compile_model(model, optimizer='adam', loss='bce-dice', threshold=0.5, dice=
     else:
         loss_pixel = loss_noempty(loss)
         losses = {'output_final': loss, 'output_pixel': loss_pixel, 'output_image': bce_with_logits}
-        loss_weights = {'output_final': 1, 'output_pixel': 0.1, 'output_image': 0.1}
+        loss_weights = {'output_final': 1.0, 'output_pixel': 0.5, 'output_image': 0.1}
         metrics = {
             'output_final': get_metrics(threshold), 'output_pixel': get_metrics(threshold),
             'output_image': accuracy_with_logits}
