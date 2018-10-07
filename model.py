@@ -142,8 +142,10 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
     # predict whether to image is empty or non-empty
     bottleneck = GlobalAveragePooling2D(name="bottleneck_gap")(bottleneck)
     bottleneck = Flatten(name="flatten")(bottleneck)
-    bottleneck = Dropout(0.5)(bottleneck)
-    fc = Dense(128, activation='relu', name="bottleneck_fc1")(bottleneck)
+    # bottleneck = Dropout(0.5)(bottleneck)
+    fc = Dense(128, name="bottleneck_fc1")(bottleneck)
+    fc = BatchNormalization(name="bottleneck_bn")(fc)
+    fc = ReLU()(fc)
     logits_image = Dense(1, name="output_image")(fc)
     fuse_image = Reshape((1, 1, 1))(logits_image)
 
