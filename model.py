@@ -152,11 +152,7 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
     logits_pixel = Conv2D(1, (1, 1), name='prediction')(outputs)
     logits_pixel = Lambda(lambda x: x, name="output_pixel")(logits_pixel)
 
-
-    fused = concatenate([UpSampling2D([height, width])(fuse_image), logits_pixel])
-    fused = conv_block_simple(fused, 32, "conv_final_1")
-    fused = conv_block_simple(fused, 32, "conv_final_2")
-    logits_final = Conv2D(1, (1, 1), name='output_final')(fused)
+    logits_final = Average([UpSampling2D([height, width])(fuse_image), logits_pixel], name='output_final')
     model = Model(inputs=[inputs], outputs=[logits_final, logits_pixel, logits_image])
     return model
 
