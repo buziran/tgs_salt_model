@@ -17,7 +17,7 @@ from util import RLenc
 
 flags.DEFINE_string('input', '../input/test', """path to test data""")
 flags.DEFINE_string('submission', '../output/submission', """prefix of submission file""")
-flags.DEFINE_string('model', '../output/model', """path to model root directory""")
+flags.DEFINE_list('model', None, """path to model root directory""")
 flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
 flags.DEFINE_float('threshold', 0.5, """threshold of confidence to predict foreground""")
 
@@ -26,8 +26,11 @@ FLAGS = flags.FLAGS
 
 
 def list_model(model_root):
-    model_dirs = glob.glob(os.path.join(model_root, "**", 'model'), recursive=True)
-    model_dirs = filter(lambda x: os.path.isdir(x), model_dirs)
+    model_dirs = []
+    for d in model_root:
+        dirs = glob.glob(os.path.join(d, "**", 'model'), recursive=True)
+        model_dirs += list(filter(lambda x: os.path.isdir(x), dirs))
+
     return model_dirs
 
 
