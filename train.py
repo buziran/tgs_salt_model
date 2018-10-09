@@ -76,7 +76,7 @@ def train(dataset):
             if not FLAGS.deep_supervised:
                 model = build_model_pretrained(
                     IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
-                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess)
+                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess, renorm=FLAGS.renorm)
             else:
                 model = build_model_pretrained_deep_supervised(
                     IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,

@@ -81,6 +81,8 @@ tf.flags.DEFINE_enum(
     'pretrained', None, enum_values=['resnet50', 'inception_resnet_v2', 'densenet121'],
     help="""whether to use batch-normalization""")
 
+tf.flags.DEFINE_bool('renorm', None, help="""whether to use batch-renormalization""")
+
 tf.flags.DEFINE_bool('retrain', True, """whether to retrain layers in pretrained model""")
 
 tf.flags.DEFINE_bool('preprocess', False, """whether to preprocess image to fit [-1, 1]""")

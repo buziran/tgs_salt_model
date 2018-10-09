@@ -17,15 +17,15 @@ from metrics import weighted_mean_iou, weighted_mean_score, weighted_bce_dice_lo
 from util import get_metrics
 
 
-def conv_block_simple(input, filters, prefix, strides=(1, 1)):
+def conv_block_simple(input, filters, prefix, strides=(1, 1), renorm=False):
     conv = Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", strides=strides, name=prefix + "_conv")(input)
-    conv = BatchNormalization(name=prefix + "_bn")(conv)
+    conv = BatchNormalization(name=prefix + "_bn", renorm=renorm)(conv)
     conv = Activation('relu', name=prefix + "_activation")(conv)
     return conv
 
 
-def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False):
-    base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
+def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False, renorm=False):
+    base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet', renorm=renorm)
 
     for i, layer in enumerate(base_model.layers):
         layer.trainable = retrain
@@ -37,24 +37,24 @@ def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False):
     conv5 = base_model.get_layer("activation_48").output
 
     up6 = concatenate([UpSampling2D()(conv5), conv4], axis=-1)
-    conv6 = conv_block_simple(up6, 256, "conv6_1")
-    conv6 = conv_block_simple(conv6, 256, "conv6_2")
+    conv6 = conv_block_simple(up6, 256, "conv6_1", renorm=renorm)
+    conv6 = conv_block_simple(conv6, 256, "conv6_2", renorm=renorm)
 
     up7 = concatenate([UpSampling2D()(conv6), conv3], axis=-1)
-    conv7 = conv_block_simple(up7, 192, "conv7_1")
-    conv7 = conv_block_simple(conv7, 192, "conv7_2")
+    conv7 = conv_block_simple(up7, 192, "conv7_1", renorm=renorm)
+    conv7 = conv_block_simple(conv7, 192, "conv7_2", renorm=renorm)
 
     up8 = concatenate([UpSampling2D()(conv7), conv2], axis=-1)
-    conv8 = conv_block_simple(up8, 128, "conv8_1")
-    conv8 = conv_block_simple(conv8, 128, "conv8_2")
+    conv8 = conv_block_simple(up8, 128, "conv8_1", renorm=renorm)
+    conv8 = conv_block_simple(conv8, 128, "conv8_2", renorm=renorm)
 
     up9 = concatenate([UpSampling2D()(conv8), conv1], axis=-1)
-    conv9 = conv_block_simple(up9, 64, "conv9_1")
-    conv9 = conv_block_simple(conv9, 64, "conv9_2")
+    conv9 = conv_block_simple(up9, 64, "conv9_1", renorm=renorm)
+    conv9 = conv_block_simple(conv9, 64, "conv9_2", renorm=renorm)
 
     up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
-    conv10 = conv_block_simple(up10, 32, "conv10_1")
-    conv10 = conv_block_simple(conv10, 32, "conv10_2")
+    conv10 = conv_block_simple(up10, 32, "conv10_1", renorm=renorm)
+    conv10 = conv_block_simple(conv10, 32, "conv10_2", renorm=renorm)
 
     if not with_bottleneck:
         return conv10
@@ -62,9 +62,12 @@ def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False):
         return conv10, conv5
 
 
-def get_unet_densenet121(input_shape, inputs, retrain=True, with_bottleneck=False):
+def get_unet_densenet121(input_shape, inputs, retrain=True, with_bottleneck=False, renorm=False):
     base_model = densenet.DenseNet121(
         input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet')
+
+    if renorm:
+        raise NotImplementedError()
 
     for i, layer in enumerate(base_model.layers):
         layer.trainable = retrain
@@ -101,7 +104,7 @@ def get_unet_densenet121(input_shape, inputs, retrain=True, with_bottleneck=Fals
         return conv10, conv5
 
 def build_model_pretrained(height, width, channels, encoder='resnet50',
-                           spatial_dropout=None, preprocess=False, retrain=True):
+                           spatial_dropout=None, preprocess=False, retrain=True, renorm=False):
     input_shape=[height, width, channels]
     inputs = Input(shape=input_shape)
     if preprocess:
@@ -110,9 +113,9 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
         _inputs = inputs
 
     if encoder == 'resnet50':
-        outputs = get_unet_resnet50(input_shape, _inputs, retrain=retrain)
+        outputs = get_unet_resnet50(input_shape, _inputs, retrain=retrain, renorm=renorm)
     elif encoder == 'densenet121':
-        outputs = get_unet_densenet121(input_shape, _inputs, retrain=retrain)
+        outputs = get_unet_densenet121(input_shape, _inputs, retrain=retrain, renorm=renorm)
     else:
         raise ValueError('encoder {} is not supported'.format(encoder))
 
@@ -124,7 +127,7 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
 
 
 def build_model_pretrained_deep_supervised(height, width, channels, encoder='resnet50',
-                           spatial_dropout=None, preprocess=False, retrain=True):
+                           spatial_dropout=None, preprocess=False, retrain=True, renorm=False):
     input_shape=[height, width, channels]
     inputs = Input(shape=input_shape)
     if preprocess:
@@ -133,9 +136,9 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
         _inputs = inputs
 
     if encoder == 'resnet50':
-        outputs, bottleneck = get_unet_resnet50(input_shape, _inputs, retrain=retrain, with_bottleneck=True)
+        outputs, bottleneck = get_unet_resnet50(input_shape, _inputs, retrain=retrain, with_bottleneck=True, renorm=renorm)
     elif encoder == 'densenet121':
-        outputs, bottleneck = get_unet_densenet121(input_shape, _inputs, retrain=retrain, with_bottleneck=True)
+        outputs, bottleneck = get_unet_densenet121(input_shape, _inputs, retrain=retrain, with_bottleneck=True, renorm=renorm)
     else:
         raise ValueError('encoder {} is not supported'.format(encoder))
 
@@ -144,7 +147,7 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
     bottleneck = Flatten(name="flatten")(bottleneck)
     # bottleneck = Dropout(0.5)(bottleneck)
     fc = Dense(128, name="bottleneck_fc1")(bottleneck)
-    fc = BatchNormalization(name="bottleneck_bn")(fc)
+    fc = BatchNormalization(name="bottleneck_bn", renorm=renorm)(fc)
     fc = ReLU()(fc)
     logits_image = Dense(1, name="output_image")(fc)
     fuse_image = Reshape((1, 1, 1))(logits_image)
