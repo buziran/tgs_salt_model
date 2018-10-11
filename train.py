@@ -76,11 +76,13 @@ def train(dataset):
             if not FLAGS.deep_supervised:
                 model = build_model_pretrained(
                     IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
-                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess, renorm=FLAGS.renorm)
+                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess,
+                    renorm=FLAGS.renorm, last_kernel=FLAGS.last_kernel)
             else:
                 model = build_model_pretrained_deep_supervised(
                     IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
-                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess)
+                    spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess,
+                    last_kernel=FLAGS.last_kernel)
         elif not FLAGS.use_ref:
             model = build_model(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)

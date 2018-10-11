@@ -104,7 +104,7 @@ def get_unet_densenet121(input_shape, inputs, retrain=True, with_bottleneck=Fals
         return conv10, conv5
 
 def build_model_pretrained(height, width, channels, encoder='resnet50',
-                           spatial_dropout=None, preprocess=False, retrain=True, renorm=False):
+                           spatial_dropout=None, preprocess=False, retrain=True, renorm=False, last_kernel=1):
     input_shape=[height, width, channels]
     inputs = Input(shape=input_shape)
     if preprocess:
@@ -121,13 +121,13 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
-    outputs = Conv2D(1, (3, 3), name='prediction')(outputs)
+    outputs = Conv2D(1, (last_kernel, last_kernel), name='prediction')(outputs)
     model = Model(inputs=[inputs], outputs=[outputs])
     return model
 
 
 def build_model_pretrained_deep_supervised(height, width, channels, encoder='resnet50',
-                           spatial_dropout=None, preprocess=False, retrain=True, renorm=False):
+                           spatial_dropout=None, preprocess=False, retrain=True, renorm=False, last_kernel=1):
     input_shape=[height, width, channels]
     inputs = Input(shape=input_shape)
     if preprocess:
@@ -154,7 +154,7 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
-    logits_pixel = Conv2D(1, (1, 1), name='prediction')(outputs)
+    logits_pixel = Conv2D(1, (last_kernel, last_kernel), name='prediction')(outputs)
     logits_pixel = Lambda(lambda x: x, name="output_pixel")(logits_pixel)
 
     logits_final = Average(name='output_final')([UpSampling2D([height, width])(fuse_image), logits_pixel])
