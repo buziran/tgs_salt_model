@@ -386,7 +386,7 @@ def ResNet(input_shape=None, classes=10, block='bottleneck', residual_unit='v2',
     for i, r in enumerate(repetitions):
         transition_dilation_rates = [transition_dilation_rate] * r
         transition_strides = [(1, 1)] * r
-        if transition_dilation_rate == (1, 1):
+        if transition_dilation_rate == (1, 1) and i != 0:
             transition_strides[0] = (2, 2)
         block = _residual_block(block_fn, filters=filters,
                                 stage=i, blocks=r,
