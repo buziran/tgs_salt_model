@@ -35,6 +35,7 @@ from tensorflow.python.keras.layers.normalization import BatchNormalization
 from tensorflow.python.keras.regularizers import l2
 from tensorflow.python.keras import backend as K
 from keras_applications.imagenet_utils import _obtain_input_shape
+from tensorflow.python.keras.utils import layer_utils
 
 
 def _bn_relu(x, bn_name=None, relu_name=None):
@@ -377,9 +378,13 @@ def ResNet(input_shape=None, classes=10, block='bottleneck', residual_unit='v2',
                                       require_flatten=include_top)
 
     if input_tensor is None:
-        img_input = Input(shape=input_shape, tensor=input_tensor)
+        img_input = Input(shape=input_shape)
     else:
-        img_input = input_tensor
+        if not K.is_keras_tensor(input_tensor):
+            img_input = Input(tensor=input_tensor, shape=input_shape)
+        else:
+            img_input = input_tensor
+
     x = _conv_bn_relu(filters=initial_filters, kernel_size=initial_kernel_size, strides=initial_strides)(img_input)
     if initial_pooling == 'max':
         x = MaxPooling2D(pool_size=(3, 3), strides=initial_strides, padding="same")(x)
@@ -423,7 +428,11 @@ def ResNet(input_shape=None, classes=10, block='bottleneck', residual_unit='v2',
     elif final_pooling == 'max':
         x = GlobalMaxPooling2D()(x)
 
-    model = Model(inputs=img_input, outputs=x)
+    if input_tensor is not None:
+        inputs = layer_utils.get_source_inputs(input_tensor)
+    else:
+        inputs = img_input
+    model = Model(inputs=inputs, outputs=x, name='resnet')
     return model
 
 
