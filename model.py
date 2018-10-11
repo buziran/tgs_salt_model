@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
 import tensorflow as tf
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
@@ -8,6 +10,7 @@ from tensorflow.python.keras import optimizers
 from tensorflow.python.keras.backend import tile
 from tensorflow.python.keras.models import load_model as _load_model
 from tensorflow.keras.applications import inception_resnet_v2
+from keras_contrib.applications import resnet as resnet
 import resnet50
 import densenet
 
@@ -23,6 +26,67 @@ def conv_block_simple(input, filters, prefix, strides=(1, 1), renorm=False):
     conv = Activation('relu', name=prefix + "_activation")(conv)
     return conv
 
+
+def get_unet_resnet_contrib(input_shape, inputs, encoder='resnet34', residual_unit='v1', with_bottleneck=False):
+    if encoder == 'resnet34':
+        base_model = resnet.ResNet(input_shape, input_tensor=inputs, block='basic',
+                                   repetitions=[3, 4, 6, 3], residual_unit=residual_unit, include_top=False)
+        if residual_unit == 'v1':
+            conv1 = base_model.get_layer("activation").output
+            conv2 = base_model.get_layer("add_2").output
+            conv3 = base_model.get_layer("add_6").output
+            conv4 = base_model.get_layer("add_12").output
+            conv5 = base_model.get_layer("add_15").output
+        elif residual_unit == 'v2':
+            conv1 = base_model.get_layer("activation").output
+            conv2 = base_model.get_layer("activation_6").output
+            conv3 = base_model.get_layer("activation_14").output
+            conv4 = base_model.get_layer("activation_26").output
+            conv5 = base_model.get_layer("activation_32").output
+        else:
+            raise ValueError()
+    elif encoder == 'resnet50':
+        base_model = resnet.ResNet(input_shape, input_tensor=inputs, block='bottleneck',
+                                   repetitions=[3, 4, 6, 3], residual_unit=residual_unit, include_top=False)
+        if residual_unit == 'v1':
+            conv1 = base_model.get_layer("activation").output
+            conv2 = base_model.get_layer("add_2").output
+            conv3 = base_model.get_layer("add_6").output
+            conv4 = base_model.get_layer("add_12").output
+            conv5 = base_model.get_layer("add_15").output
+        elif residual_unit == 'v2':
+            conv1 = base_model.get_layer("activation").output
+            conv2 = base_model.get_layer("activation_9").output
+            conv3 = base_model.get_layer("activation_21").output
+            conv4 = base_model.get_layer("activation_39").output
+            conv5 = base_model.get_layer("activation_48").output
+    else:
+        raise ValueError("encoder {} is not supported".format(encoder))
+
+    up6 = concatenate([UpSampling2D()(conv5), conv4], axis=-1)
+    conv6 = conv_block_simple(up6, 256, "conv6_1")
+    conv6 = conv_block_simple(conv6, 256, "conv6_2")
+
+    up7 = concatenate([UpSampling2D()(conv6), conv3], axis=-1)
+    conv7 = conv_block_simple(up7, 192, "conv7_1")
+    conv7 = conv_block_simple(conv7, 192, "conv7_2")
+
+    up8 = concatenate([UpSampling2D()(conv7), conv2], axis=-1)
+    conv8 = conv_block_simple(up8, 128, "conv8_1")
+    conv8 = conv_block_simple(conv8, 128, "conv8_2")
+
+    up9 = concatenate([UpSampling2D()(conv8), conv1], axis=-1)
+    conv9 = conv_block_simple(up9, 64, "conv9_1")
+    conv9 = conv_block_simple(conv9, 64, "conv9_2")
+
+    up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
+    conv10 = conv_block_simple(up10, 32, "conv10_1")
+    conv10 = conv_block_simple(conv10, 32, "conv10_2")
+
+    if not with_bottleneck:
+        return conv10
+    else:
+        return conv10, conv5
 
 def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False, renorm=False):
     base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet', renorm=renorm)
@@ -102,6 +166,27 @@ def get_unet_densenet121(input_shape, inputs, retrain=True, with_bottleneck=Fals
         return conv10
     else:
         return conv10, conv5
+
+def build_model_contrib(height, width, channels, encoder='resnet34', residual_unit='v2',
+                           spatial_dropout=None, preprocess=False, last_kernel=1):
+    input_shape=[height, width, channels]
+    inputs = Input(shape=input_shape)
+    if preprocess:
+        _inputs = Lambda(lambda x: x*2 - 1.0, name="preprocess")(inputs)
+    else:
+        _inputs = inputs
+
+    if encoder in ['resnet34', 'resnet50']:
+        outputs = get_unet_resnet_contrib(input_shape, _inputs, encoder=encoder, residual_unit=residual_unit)
+    else:
+        raise ValueError('encoder {} is not supported'.format(encoder))
+
+    if spatial_dropout is not None:
+        outputs = SpatialDropout2D(spatial_dropout)(outputs)
+    outputs = Conv2D(1, (last_kernel, last_kernel), name='prediction')(outputs)
+    model = Model(inputs=[inputs], outputs=[outputs])
+    return model
+
 
 def build_model_pretrained(height, width, channels, encoder='resnet50',
                            spatial_dropout=None, preprocess=False, retrain=True, renorm=False, last_kernel=1):

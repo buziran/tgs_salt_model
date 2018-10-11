@@ -82,17 +82,20 @@ tf.flags.DEFINE_float(
 """Model"""
 tf.flags.DEFINE_enum(
     'pretrained', None, enum_values=['resnet50', 'inception_resnet_v2', 'densenet121'],
-    help="""whether to use batch-normalization""")
+    help="""pretrained model of keras-applications""")
 
 tf.flags.DEFINE_bool('renorm', None, help="""whether to use batch-renormalization""")
 
 tf.flags.DEFINE_bool('retrain', True, """whether to retrain layers in pretrained model""")
 
-tf.flags.DEFINE_bool('preprocess', False, """whether to preprocess image to fit [-1, 1]""")
+tf.flags.DEFINE_enum(
+    'contrib', None, enum_values=['resnet34', 'resnet50'],
+    help="""contribution model of keras-contrib""")
 
 tf.flags.DEFINE_enum(
-    'contrib', None, enum_values=['resnet18', 'resnet34', 'resnet50'],
-    help="""contribution model of keras-contrib""")
+    'residual_unit', 'v1', enum_values=['v1', 'v2'], help="which residual unit to use in contibuted resnet")
+
+tf.flags.DEFINE_bool('preprocess', False, """whether to preprocess image to fit [-1, 1]""")
 
 tf.flags.DEFINE_float('spatial_dropout', None, """factor of spatial dropout""")
 

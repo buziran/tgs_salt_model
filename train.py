@@ -12,7 +12,7 @@ from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.models import load_model
 
 from model import build_model, build_model_ref, build_model_pretrained, compile_model, \
-    build_model_pretrained_deep_supervised
+    build_model_pretrained_deep_supervised, build_model_contrib
 from dataset import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard, write_summary, CLRDecay
@@ -72,6 +72,10 @@ def train(dataset):
             path_restore = os.path.join(FLAGS.restore, NAME_MODEL)
             print("Restoring model from {}".format(path_restore))
             model = load_model(path_restore, compile=False)
+        elif FLAGS.contrib is not None:
+            model = build_model_contrib(
+                IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.contrib, residual_unit=FLAGS.residual_unit,
+                spatial_dropout=FLAGS.spatial_dropout, preprocess=FLAGS.preprocess, last_kernel=FLAGS.last_kernel)
         elif FLAGS.pretrained is not None:
             if not FLAGS.deep_supervised:
                 model = build_model_pretrained(
