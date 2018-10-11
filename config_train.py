@@ -68,6 +68,9 @@ tf.flags.DEFINE_bool(
 tf.flags.DEFINE_bool(
     'reduce_on_plateau', False, help="""whether to reduce learning rate on plateau""")
 
+tf.flags.DEFINE_bool(
+    'save_best_only', True, help="""whether to save best score model or save latest model""")
+
 """Dataset"""
 
 tf.flags.DEFINE_bool(

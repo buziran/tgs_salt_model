@@ -105,7 +105,7 @@ def train(dataset):
         monitor = 'val_weighted_mean_score'
     else:
         monitor = 'val_output_final_weighted_mean_score'
-    checkpointer = ModelCheckpoint(path_model, monitor=monitor, verbose=1, save_best_only=True, mode='max')
+    checkpointer = ModelCheckpoint(path_model, monitor=monitor, verbose=1, save_best_only=FLAGS.save_best_only, mode='max')
     tensorboarder = MyTensorBoard(FLAGS.log, model=model)
     if not FLAGS.cyclic:
         lrscheduler = LearningRateScheduler(
