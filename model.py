@@ -88,6 +88,38 @@ def get_unet_resnet_contrib(input_shape, inputs, encoder='resnet34', residual_un
     else:
         return conv10, conv5
 
+def get_unet_resnet50_shallow(input_shape, inputs, retrain=True, with_bottleneck=False, renorm=False):
+    base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet', renorm=renorm)
+
+    for i, layer in enumerate(base_model.layers):
+        layer.trainable = retrain
+
+    conv1 = base_model.get_layer("activation").output
+    conv2 = base_model.get_layer("activation_9").output
+    conv3 = base_model.get_layer("activation_21").output
+    conv4 = base_model.get_layer("activation_39").output
+
+    up7 = concatenate([UpSampling2D()(conv4), conv3], axis=-1)
+    conv7 = conv_block_simple(up7, 192, "conv7_1", renorm=renorm)
+    conv7 = conv_block_simple(conv7, 192, "conv7_2", renorm=renorm)
+
+    up8 = concatenate([UpSampling2D()(conv7), conv2], axis=-1)
+    conv8 = conv_block_simple(up8, 128, "conv8_1", renorm=renorm)
+    conv8 = conv_block_simple(conv8, 128, "conv8_2", renorm=renorm)
+
+    up9 = concatenate([UpSampling2D()(conv8), conv1], axis=-1)
+    conv9 = conv_block_simple(up9, 64, "conv9_1", renorm=renorm)
+    conv9 = conv_block_simple(conv9, 64, "conv9_2", renorm=renorm)
+
+    up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
+    conv10 = conv_block_simple(up10, 32, "conv10_1", renorm=renorm)
+    conv10 = conv_block_simple(conv10, 32, "conv10_2", renorm=renorm)
+
+    if not with_bottleneck:
+        return conv10
+    else:
+        return conv10, conv4
+
 def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False, renorm=False):
     base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet', renorm=renorm)
 
@@ -199,6 +231,8 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
 
     if encoder == 'resnet50':
         outputs = get_unet_resnet50(input_shape, _inputs, retrain=retrain, renorm=renorm)
+    elif encoder == 'resnet50-shallow':
+        outputs = get_unet_resnet50_shallow(input_shape, _inputs, retrain=retrain, renorm=renorm)
     elif encoder == 'densenet121':
         outputs = get_unet_densenet121(input_shape, _inputs, retrain=retrain, renorm=renorm)
     else:

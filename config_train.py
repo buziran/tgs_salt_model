@@ -81,7 +81,7 @@ tf.flags.DEFINE_float(
 
 """Model"""
 tf.flags.DEFINE_enum(
-    'pretrained', None, enum_values=['resnet50', 'inception_resnet_v2', 'densenet121'],
+    'pretrained', None, enum_values=['resnet50', 'resnet50-shallow', 'inception_resnet_v2', 'densenet121'],
     help="""pretrained model of keras-applications""")
 
 tf.flags.DEFINE_bool('renorm', None, help="""whether to use batch-renormalization""")
