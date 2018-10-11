@@ -31,6 +31,8 @@ def get_unet_resnet_contrib(input_shape, inputs, encoder='resnet34', residual_un
     if encoder == 'resnet34':
         base_model = resnet.ResNet(input_shape, input_tensor=inputs, block='basic',
                                    repetitions=[3, 4, 6, 3], residual_unit=residual_unit, include_top=False)
+        for i, layer in enumerate(base_model.layers):
+            layer.trainable = True
         if residual_unit == 'v1':
             conv1 = base_model.get_layer("activation").output
             conv2 = base_model.get_layer("add_2").output
@@ -48,6 +50,8 @@ def get_unet_resnet_contrib(input_shape, inputs, encoder='resnet34', residual_un
     elif encoder == 'resnet50':
         base_model = resnet.ResNet(input_shape, input_tensor=inputs, block='bottleneck',
                                    repetitions=[3, 4, 6, 3], residual_unit=residual_unit, include_top=False)
+        for i, layer in enumerate(base_model.layers):
+            layer.trainable = True
         if residual_unit == 'v1':
             conv1 = base_model.get_layer("activation").output
             conv2 = base_model.get_layer("add_2").output
@@ -215,7 +219,7 @@ def build_model_contrib(height, width, channels, encoder='resnet34', residual_un
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
-    outputs = Conv2D(1, (last_kernel, last_kernel), name='prediction')(outputs)
+    outputs = Conv2D(1, (last_kernel, last_kernel), name='prediction', padding='same')(outputs)
     model = Model(inputs=[inputs], outputs=[outputs])
     return model
 
@@ -240,7 +244,7 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
-    outputs = Conv2D(1, (last_kernel, last_kernel), name='prediction')(outputs)
+    outputs = Conv2D(1, (last_kernel, last_kernel), name='prediction', padding='same')(outputs)
     model = Model(inputs=[inputs], outputs=[outputs])
     return model
 
@@ -273,7 +277,7 @@ def build_model_pretrained_deep_supervised(height, width, channels, encoder='res
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
-    logits_pixel = Conv2D(1, (last_kernel, last_kernel), name='prediction')(outputs)
+    logits_pixel = Conv2D(1, (last_kernel, last_kernel), name='prediction', padding='same')(outputs)
     logits_pixel = Lambda(lambda x: x, name="output_pixel")(logits_pixel)
 
     logits_final = Average(name='output_final')([UpSampling2D([height, width])(fuse_image), logits_pixel])
