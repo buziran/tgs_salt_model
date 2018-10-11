@@ -111,6 +111,8 @@ tf.flags.DEFINE_integer('start_ch', 16, """number of channel at UNet first layer
 
 tf.flags.DEFINE_integer('last_kernel', 1, """kernel size of last convolution layer""")
 
+tf.flags.DEFINE_bool('last_1x1', False, """whether to add 1x1 conv as last layer""")
+
 """Augmentations"""
 tf.flags.DEFINE_bool(
     'augment', True, """whether to apply augment""")
