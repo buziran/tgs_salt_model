@@ -17,23 +17,23 @@ Implementation Adapted from: github.com/raghakot/keras-resnet
 from __future__ import division
 
 import six
-from keras.models import Model
-from keras.layers import Input
-from keras.layers import Activation
-from keras.layers import Reshape
-from keras.layers import Dense
-from keras.layers import Flatten
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import AveragePooling2D
-from keras.layers.pooling import GlobalAveragePooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import Dropout
-from keras.layers.merge import add
-from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2
-from keras import backend as K
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Input
+from tensorflow.python.keras.layers import Activation
+from tensorflow.python.keras.layers import Reshape
+from tensorflow.python.keras.layers import Dense
+from tensorflow.python.keras.layers import Flatten
+from tensorflow.python.keras.layers import Conv2D
+from tensorflow.python.keras.layers import MaxPooling2D
+from tensorflow.python.keras.layers import AveragePooling2D
+from tensorflow.python.keras.layers.pooling import GlobalAveragePooling2D
+from tensorflow.python.keras.layers import GlobalMaxPooling2D
+from tensorflow.python.keras.layers import GlobalAveragePooling2D
+from tensorflow.python.keras.layers import Dropout
+from tensorflow.python.keras.layers.merge import add
+from tensorflow.python.keras.layers.normalization import BatchNormalization
+from tensorflow.python.keras.regularizers import l2
+from tensorflow.python.keras import backend as K
 from keras_applications.imagenet_utils import _obtain_input_shape
 
 
@@ -376,7 +376,10 @@ def ResNet(input_shape=None, classes=10, block='bottleneck', residual_unit='v2',
                                       data_format=K.image_data_format(),
                                       require_flatten=include_top)
 
-    img_input = Input(shape=input_shape, tensor=input_tensor)
+    if input_tensor is None:
+        img_input = Input(shape=input_shape, tensor=input_tensor)
+    else:
+        img_input = input_tensor
     x = _conv_bn_relu(filters=initial_filters, kernel_size=initial_kernel_size, strides=initial_strides)(img_input)
     if initial_pooling == 'max':
         x = MaxPooling2D(pool_size=(3, 3), strides=initial_strides, padding="same")(x)
