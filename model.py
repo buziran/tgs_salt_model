@@ -121,7 +121,7 @@ def build_model_pretrained(height, width, channels, encoder='resnet50',
 
     if spatial_dropout is not None:
         outputs = SpatialDropout2D(spatial_dropout)(outputs)
-    outputs = Conv2D(1, (1, 1), name='prediction')(outputs)
+    outputs = Conv2D(1, (3, 3), name='prediction')(outputs)
     model = Model(inputs=[inputs], outputs=[outputs])
     return model
 
