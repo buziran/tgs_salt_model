@@ -103,26 +103,29 @@ def get_unet_resnet50_shallow(input_shape, inputs, retrain=True, with_bottleneck
     conv3 = base_model.get_layer("activation_21").output
     conv4 = base_model.get_layer("activation_39").output
 
-    up7 = concatenate([UpSampling2D()(conv4), conv3], axis=-1)
-    conv7 = conv_block_simple(up7, 192, "conv7_1", renorm=renorm)
-    conv7 = conv_block_simple(conv7, 192, "conv7_2", renorm=renorm)
+    conv5 = conv_block_simple(conv4, 256, "conv5_1", renorm=renorm)
+    conv5 = conv_block_simple(conv5, 256, "conv5_2", renorm=renorm)
 
-    up8 = concatenate([UpSampling2D()(conv7), conv2], axis=-1)
-    conv8 = conv_block_simple(up8, 128, "conv8_1", renorm=renorm)
-    conv8 = conv_block_simple(conv8, 128, "conv8_2", renorm=renorm)
+    up6 = concatenate([UpSampling2D()(conv5), conv3], axis=-1)
+    conv6 = conv_block_simple(up6, 192, "conv6_1", renorm=renorm)
+    conv6 = conv_block_simple(conv6, 192, "conv6_2", renorm=renorm)
 
-    up9 = concatenate([UpSampling2D()(conv8), conv1], axis=-1)
-    conv9 = conv_block_simple(up9, 64, "conv9_1", renorm=renorm)
-    conv9 = conv_block_simple(conv9, 64, "conv9_2", renorm=renorm)
+    up7 = concatenate([UpSampling2D()(conv6), conv2], axis=-1)
+    conv7 = conv_block_simple(up7, 128, "conv7_1", renorm=renorm)
+    conv7 = conv_block_simple(conv7, 128, "conv7_2", renorm=renorm)
 
-    up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
-    conv10 = conv_block_simple(up10, 32, "conv10_1", renorm=renorm)
-    conv10 = conv_block_simple(conv10, 32, "conv10_2", renorm=renorm)
+    up8 = concatenate([UpSampling2D()(conv7), conv1], axis=-1)
+    conv8 = conv_block_simple(up8, 64, "conv8_1", renorm=renorm)
+    conv8 = conv_block_simple(conv8, 64, "conv8_2", renorm=renorm)
+
+    up9 = concatenate([UpSampling2D()(conv8), base_model.input], axis=-1)
+    conv9 = conv_block_simple(up9, 32, "conv9_1", renorm=renorm)
+    conv9 = conv_block_simple(conv9, 32, "conv9_2", renorm=renorm)
 
     if not with_bottleneck:
-        return conv10
+        return conv9
     else:
-        return conv10, conv4
+        return conv9, conv4
 
 def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False, renorm=False):
     base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet', renorm=renorm)
