@@ -95,7 +95,7 @@ tf.flags.DEFINE_enum(
 tf.flags.DEFINE_enum(
     'residual_unit', 'v1', enum_values=['v1', 'v2'], help="which residual unit to use in contibuted resnet")
 
-tf.flags.DEFINE_bool('preprocess', False, """whether to preprocess image to fit [-1, 1]""")
+tf.flags.DEFINE_bool('preprocess', True, """whether to preprocess image to fit [-1, 1]""")
 
 tf.flags.DEFINE_float('spatial_dropout', None, """factor of spatial dropout""")
 
