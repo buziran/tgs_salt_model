@@ -177,7 +177,7 @@ class Dataset(object):
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
                         batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, deep_supervised=False, augment_dict=None,
-                        repeat=None, mask_padding=False):
+                        repeat=None, mask_padding=True):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
 
         paths_train_x = [os.path.join(self.path_input, 'images', idx) for idx in id_train]
