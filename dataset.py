@@ -370,7 +370,7 @@ class Dataset(object):
             if augment_dict['height_shift_range'] is not None or augment_dict['width_shift_range'] is not None:
                 image, mask, weight = _rand_shift(
                     image, mask, weight, augment_dict['height_shift_range'], augment_dict['width_shift_range'], mode=mode)
-            if augment_dict['random_erase'] is not None:
+            if augment_dict['random_erase'] is not None and augment_dict['random_erase'] != "none":
                 if augment_dict['random_erase'] == 'constant':
                     pixel_wise = False
                     range_image = (0, 1)

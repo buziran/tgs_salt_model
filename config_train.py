@@ -139,7 +139,7 @@ tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
 tf.flags.DEFINE_enum(
-    'random_erase', 'constant', enum_values=['pixel', 'constant', 'zero'], help="""mode to fill in random-erasing""")
+    'random_erase', 'constant', enum_values=['pixel', 'constant', 'zero', 'none'], help="""mode to fill in random-erasing""")
 
 tf.flags.DEFINE_float(
     'mixup', None, help="""alpha value of mixup""")
