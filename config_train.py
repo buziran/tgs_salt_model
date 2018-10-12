@@ -11,6 +11,8 @@ tf.flags.DEFINE_integer(
 
 tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
 
+tf.flags.DEFINE_bool('mask_padding', True, """whether to mask padding area when adjust=symmetric|reflect|constant""")
+
 tf.flags.DEFINE_string('restore_weight', None, """path to weight directory to restore""")
 
 tf.flags.DEFINE_float(

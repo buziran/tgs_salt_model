@@ -26,7 +26,7 @@ def resize(image, target_shape, method=tf.image.ResizeMethod.BILINEAR):
     image = tf.image.resize_images(image, target_shape, method=method)
     return image
 
-def pad(image, target_shape, mode='CONSTANT', set_shape=True):
+def pad(image, target_shape, mode='CONSTANT', set_shape=True, constant_values=0.0):
     target_height, target_width = target_shape
     shape = tf.shape(image)
     height, width = shape[0], shape[1]
@@ -34,7 +34,7 @@ def pad(image, target_shape, mode='CONSTANT', set_shape=True):
     bottom = target_height - height - top
     left = tf.cast((target_width - width) / 2, tf.int32)
     right = target_width - width - left
-    image = tf.pad(image, mode=mode, paddings=[[top, bottom], [left, right], [0, 0]])
+    image = tf.pad(image, mode=mode, paddings=[[top, bottom], [left, right], [0, 0]], constant_values=constant_values)
     if set_shape:
         _, _, channels = image.get_shape().as_list()
         image.set_shape(shape=(target_height, target_width, channels))
@@ -176,7 +176,8 @@ class Dataset(object):
 
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
-                        batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, deep_supervised=False, augment_dict=None, repeat=None):
+                        batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, deep_supervised=False, augment_dict=None,
+                        repeat=None, mask_padding=False):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
 
         paths_train_x = [os.path.join(self.path_input, 'images', idx) for idx in id_train]
@@ -226,8 +227,11 @@ class Dataset(object):
                 weight = resize(weight, target_shape=(IM_HEIGHT, IM_WIDTH), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
             elif adjust in ['reflect', 'constant', 'symmetric']:
                 image = pad(image, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
-                mask = pad(mask, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
-                weight = pad(weight, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+                mask = pad(mask, target_shape=(IM_HEIGHT, IM_WIDTH), mode=adjust)
+                if mask_padding:
+                    weight = pad(weight, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT')
+                else:
+                    weight = pad(weight, target_shape=(IM_HEIGHT, IM_WIDTH), mode='CONSTANT', constant_values=1.0)
             else:
                 raise ValueError("adjust-mode {} is not supported".format(adjust))
             return image, mask, weight
