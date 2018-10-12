@@ -235,6 +235,20 @@ class Dataset(object):
         def _rand_flip(image, flip_fn, p):
             return tf.cond(p>0.5, true_fn=lambda: flip_fn(image), false_fn=lambda: image)
 
+        def _rand_gradation(image, max_delta):
+            left_scale = tf.random_uniform((), minval=1.0-max_delta, maxval=1.0+max_delta, dtype=tf.float32)
+            right_scale = tf.random_uniform((), minval=1.0-max_delta, maxval=1.0+max_delta, dtype=tf.float32)
+            top_scale = tf.random_uniform((), minval=1.0-max_delta, maxval=1.0+max_delta, dtype=tf.float32)
+            bottom_scale = tf.random_uniform((), minval=1.0-max_delta, maxval=1.0+max_delta, dtype=tf.float32)
+
+            horizontal_gradation = tf.reshape(tf.lin_space(left_scale, right_scale, num=IM_WIDTH), shape=(1, IM_WIDTH, 1))
+            vertical_gradation = tf.reshape(tf.lin_space(top_scale, bottom_scale, num=IM_HEIGHT), shape=(IM_HEIGHT, 1, 1))
+            horizontal_gradation = tf.tile(horizontal_gradation, (IM_HEIGHT, 1, 1))
+            vertical_gradation = tf.tile(vertical_gradation, (1, IM_WIDTH, 1))
+            image = image * (horizontal_gradation * vertical_gradation)
+            # image = tf.tile((horizontal_gradation * vertical_gradation),(1,1,3))
+            return image
+
         def _rand_shift(image, mask, weight, height_shift_range, width_shift_range, mode='CONSTANT'):
             orig_height, orig_width, orig_channels = image.get_shape().as_list()
             height_shift_range = height_shift_range if height_shift_range is not None else 0.0
@@ -349,6 +363,9 @@ class Dataset(object):
             if augment_dict['brightness_range'] is not None:
                 max_delta = augment_dict['brightness_range']
                 image = tf.image.random_brightness(image, max_delta)
+            if augment_dict['gradation_range'] is not None:
+                max_delta = augment_dict['gradation_range']
+                image = _rand_gradation(image, max_delta)
             if augment_dict['zoom_range'] is not None and augment_dict['zoom_range'] != 0.0:
                 zoom_range = augment_dict['zoom_range']
                 zoom = tf.random_uniform((), (1-zoom_range), (1+zoom_range), dtype=tf.float32)
