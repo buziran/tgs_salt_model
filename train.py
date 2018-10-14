@@ -12,7 +12,7 @@ from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.models import load_model
 
 from model import build_model, build_model_ref, build_model_pretrained, compile_model, \
-    build_model_pretrained_deep_supervised, build_model_contrib
+    build_model_pretrained_deep_supervised, build_model_contrib, build_model_ref2
 from dataset import Dataset
 from constant import *
 from util import StepDecay, MyTensorBoard, write_summary, CLRDecay
@@ -89,8 +89,8 @@ def train(dataset):
                     spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess,
                     last_kernel=FLAGS.last_kernel, last_1x1=FLAGS.last_1x1)
         elif FLAGS.use_ref2:
-            model = build_model(
-                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)
+            model = build_model_ref2(
+                IM_HEIGHT, IM_WIDTH, IM_CHAN, preprocess=FLAGS.preprocess)
         elif FLAGS.use_ref:
             model = build_model_ref(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out,

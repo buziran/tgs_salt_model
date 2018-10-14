@@ -380,7 +380,7 @@ def build_model_ref2(height, width, channels, preprocess=False):
     uconv4 = residual_block(uconv4, start_neurons * 8, True)
 
     # 12 -> 25
-    deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding='valid')(uconv4)
+    deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding='same')(uconv4)
     uconv3 = concatenate([deconv3, conv3])
     uconv3 = Dropout(dropout_ratio)(uconv3)
 
@@ -398,7 +398,7 @@ def build_model_ref2(height, width, channels, preprocess=False):
     uconv2 = residual_block(uconv2, start_neurons * 2, True)
 
     # 50 -> 101
-    deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding='valid')(uconv2)
+    deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding='same')(uconv2)
     uconv1 = concatenate([deconv1, conv1])
     uconv1 = Dropout(dropout_ratio)(uconv1)
 
