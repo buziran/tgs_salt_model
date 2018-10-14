@@ -105,7 +105,9 @@ tf.flags.DEFINE_bool('batch_norm', True, """whether to use batch-normalization""
 
 tf.flags.DEFINE_float('drop_out', 0.0, """whether to use drop-out""")
 
-tf.flags.DEFINE_bool('use_ref', True, """whether to use reference model""")
+tf.flags.DEFINE_bool('use_ref', False, """whether to use reference model""")
+
+tf.flags.DEFINE_bool('use_ref2', False, """whether to use reference model 2""")
 
 tf.flags.DEFINE_integer('depth', 5, """number of channel at UNet first layer""")
 

@@ -88,13 +88,16 @@ def train(dataset):
                     IM_HEIGHT, IM_WIDTH, IM_CHAN, encoder=FLAGS.pretrained,
                     spatial_dropout=FLAGS.spatial_dropout, retrain=FLAGS.retrain, preprocess=FLAGS.preprocess,
                     last_kernel=FLAGS.last_kernel, last_1x1=FLAGS.last_1x1)
-        elif not FLAGS.use_ref:
+        elif FLAGS.use_ref2:
             model = build_model(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)
-        else:
+        elif FLAGS.use_ref:
             model = build_model_ref(
                 IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out,
                 depth=FLAGS.depth, start_ch=FLAGS.start_ch)
+        else:
+            model = build_model(
+                IM_HEIGHT, IM_WIDTH, IM_CHAN, batch_norm=FLAGS.batch_norm, drop_out=FLAGS.drop_out)
 
         if FLAGS.restore_weight is not None:
             path_weight = os.path.join(FLAGS.restore_weight, NAME_MODEL)
