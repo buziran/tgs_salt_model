@@ -12,9 +12,23 @@ from constant import *
 from random_erase import RandomErasing
 
 
-def load_img(filename, channels=3):
+def load_img(filename, channels=3, with_depth=False):
+    if not with_depth:
+        image = _load_img(filename, channels=channels)
+    else:
+        image = _load_img_with_depth(filename)
+    return image
+
+def _load_img(filename, channels=3):
     image_string = tf.read_file(filename)
     image = tf.image.decode_png(image_string, channels=channels)
+    return image
+
+def _load_img_with_depth(filename):
+    image = tf.cast(_load_img(filename, channels=1), tf.float32)
+    depth = tf.tile(tf.reshape(tf.lin_space(0.0, 255.0, ORIG_HEIGHT), shape=(ORIG_HEIGHT, 1, 1)), (1, ORIG_WIDTH, 1))
+    image_x_depth = image * depth
+    image = tf.concat([tf.cast(image, tf.float32), depth, image_x_depth], axis=2)
     return image
 
 def normalize(image):
@@ -80,7 +94,7 @@ class Dataset(object):
         train_index = list(set(np.arange(num_samples)) - set(valid_index))
         return len(train_index), len(valid_index)
 
-    def gen_test(self, adjust='resize', batch_size=32, repeat=1, with_path=True):
+    def gen_test(self, adjust='resize', batch_size=32, repeat=1, with_path=True, with_depth=False):
 
         paths_test_x = [os.path.join(self.path_input, 'images', idx) for idx in self.id_samples]
 
@@ -88,7 +102,7 @@ class Dataset(object):
 
         if with_path:
             def _load_normalize(path_image):
-                image = load_img(path_image, channels=IM_CHAN)
+                image = load_img(path_image, channels=IM_CHAN, with_depth=with_depth)
                 return normalize(image), path_image
 
             def _adjust(image, path_image):
@@ -119,7 +133,7 @@ class Dataset(object):
         iter_test = dataset_test.make_one_shot_iterator()
         return iter_test
 
-    def gen_valid(self, n_splits, idx_kfold, adjust='resize', batch_size=32, repeat=1, with_path=True):
+    def gen_valid(self, n_splits, idx_kfold, adjust='resize', batch_size=32, repeat=1, with_path=True, with_depth=False):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
 
         paths_valid_x = [os.path.join(self.path_input, 'images', idx) for idx in id_valid]
@@ -131,7 +145,7 @@ class Dataset(object):
 
         if with_path:
             def _load_normalize(path_image, path_mask):
-                image = load_img(path_image, channels=IM_CHAN)
+                image = load_img(path_image, channels=IM_CHAN, with_depth=with_depth)
                 mask = load_img(path_mask, channels=1)
                 return normalize(image), normalize(mask), path_image
 
@@ -177,7 +191,7 @@ class Dataset(object):
     def gen_train_valid(self, n_splits, idx_kfold,
                         adjust='resize', weight_fg=1.0, weight_bg=1.0, weight_adaptive=None,
                         batch_size=32, filter_vert_hori=True, ignore_tiny=0.0, deep_supervised=False, augment_dict=None,
-                        repeat=None, mask_padding=True):
+                        repeat=None, mask_padding=True, with_depth=False):
         id_train, id_valid = self.kfold_split(n_splits, idx_kfold)
 
         paths_train_x = [os.path.join(self.path_input, 'images', idx) for idx in id_train]
@@ -193,7 +207,7 @@ class Dataset(object):
         dataset_valid  = tf.data.Dataset.zip((dataset_valid_x, dataset_valid_y))
 
         def _load_normalize(path_image, path_mask):
-            image = load_img(path_image, channels=IM_CHAN)
+            image = load_img(path_image, channels=IM_CHAN, with_depth=with_depth)
             mask = load_img(path_mask, channels=1)
             return normalize(image), normalize(mask)
 

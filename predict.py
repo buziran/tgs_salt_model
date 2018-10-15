@@ -42,6 +42,8 @@ tf.flags.DEFINE_enum(
 
 tf.flags.DEFINE_bool('deep_supervised', False, """whether to use deep-supervised model""")
 
+tf.flags.DEFINE_bool('with_depth', False, """whether to use depth information""")
+
 FLAGS = tf.flags.FLAGS
 
 FILENAME_IMAGE_PREDS = "image_preds.csv"
@@ -82,7 +84,7 @@ def main(argv=None):
     tf.gfile.MakeDirs(FLAGS.prediction)
 
     dataset = Dataset(FLAGS.input)
-    iter_test  = dataset.gen_test(batch_size=FLAGS.batch_size, adjust=FLAGS.adjust)
+    iter_test  = dataset.gen_test(batch_size=FLAGS.batch_size, adjust=FLAGS.adjust, with_depth=FLAGS.with_depth)
 
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(

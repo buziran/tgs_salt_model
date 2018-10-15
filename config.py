@@ -25,3 +25,5 @@ tf.flags.DEFINE_enum(
 
 tf.flags.DEFINE_bool('deep_supervised', False, """whether to use deep-supervised model""")
 
+tf.flags.DEFINE_bool('with_depth', False, """whether to use depth information""")
+

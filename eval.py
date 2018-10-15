@@ -39,7 +39,7 @@ def eval(dataset):
         iter_train, iter_valid = dataset.gen_train_valid(
             n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, adjust=FLAGS.adjust,
             weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive, repeat=1,
-            filter_vert_hori=False, deep_supervised=FLAGS.deep_supervised)
+            filter_vert_hori=False, deep_supervised=FLAGS.deep_supervised, with_depth=FLAGS.with_depth)
 
         num_train, num_valid = dataset.len_train_valid(N_SPLITS, FLAGS.cv)
 

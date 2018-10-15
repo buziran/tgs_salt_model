@@ -42,6 +42,8 @@ tf.flags.DEFINE_enum(
 tf.flags.DEFINE_float(
     'threshold', 0.5, """threshold of confidence to predict foreground""")
 
+tf.flags.DEFINE_bool('with_depth', False, """whether to use depth information""")
+
 FLAGS = tf.flags.FLAGS
 
 
@@ -51,7 +53,7 @@ def main(argv=None):
         tf.gfile.MakeDirs(os.path.dirname(FLAGS.submission))
 
     dataset = Dataset(FLAGS.input)
-    iter_test  = dataset.gen_test(batch_size=FLAGS.batch_size, adjust=FLAGS.adjust)
+    iter_test  = dataset.gen_test(batch_size=FLAGS.batch_size, adjust=FLAGS.adjust, with_depth=FLAGS.with_depth)
 
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(

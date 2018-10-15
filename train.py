@@ -58,7 +58,8 @@ def train(dataset):
             n_splits=N_SPLITS, idx_kfold=FLAGS.cv, batch_size=FLAGS.batch_size, adjust=FLAGS.adjust,
             weight_fg=FLAGS.weight_fg, weight_bg=FLAGS.weight_bg, weight_adaptive=weight_adaptive,
             filter_vert_hori=FLAGS.filter_vert_hori, ignore_tiny=FLAGS.ignore_tiny,
-            augment_dict=augment_dict(), deep_supervised=FLAGS.deep_supervised, mask_padding=FLAGS.mask_padding)
+            augment_dict=augment_dict(), deep_supervised=FLAGS.deep_supervised, mask_padding=FLAGS.mask_padding,
+            with_depth=FLAGS.with_depth)
 
     sess = tf.Session(config=tf.ConfigProto(
         allow_soft_placement=True,  gpu_options=tf.GPUOptions(
