@@ -125,7 +125,7 @@ def get_unet_resnet50_shallow(input_shape, inputs, retrain=True, with_bottleneck
     if not with_bottleneck:
         return conv9
     else:
-        return conv9, conv4
+        return conv9, conv5
 
 def get_unet_resnet50(input_shape, inputs, retrain=True, with_bottleneck=False, renorm=False):
     base_model = resnet50.ResNet50(input_shape=input_shape, input_tensor=inputs, include_top=False, weights='imagenet', renorm=renorm)
