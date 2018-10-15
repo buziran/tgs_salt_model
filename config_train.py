@@ -11,7 +11,7 @@ tf.flags.DEFINE_integer(
 
 tf.flags.DEFINE_string('restore', None, """path to model directory to restore""")
 
-tf.flags.DEFINE_bool('mask_padding', True, """whether to mask padding area when adjust=symmetric|reflect|constant""")
+tf.flags.DEFINE_bool('mask_padding', False, """whether to mask padding area when adjust=symmetric|reflect|constant""")
 
 tf.flags.DEFINE_string('restore_weight', None, """path to weight directory to restore""")
 
@@ -134,7 +134,7 @@ tf.flags.DEFINE_float(
     'zoom_range', 0.2, """random zoom range""")
 
 tf.flags.DEFINE_float(
-    'shift_range', 0.0, """random shift range""")
+    'shift_range', 0.2, """random shift range""")
 
 tf.flags.DEFINE_float(
     'brightness_range', 0.0, """random brightness range""")
@@ -146,7 +146,7 @@ tf.flags.DEFINE_enum(
     'fill_mode', 'reflect', enum_values=['constant', 'nearest', 'reflect', 'wrap'], help="""fill mode""")
 
 tf.flags.DEFINE_enum(
-    'random_erase', 'constant', enum_values=['pixel', 'constant', 'zero', 'none'], help="""mode to fill in random-erasing""")
+    'random_erase', 'none', enum_values=['pixel', 'constant', 'zero', 'none'], help="""mode to fill in random-erasing""")
 
 tf.flags.DEFINE_float(
     'mixup', None, help="""alpha value of mixup""")
