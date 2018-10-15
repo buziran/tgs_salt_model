@@ -27,8 +27,10 @@ def _load_img(filename, channels=3):
 def _load_img_with_depth(filename):
     image = tf.cast(_load_img(filename, channels=1), tf.float32)
     depth = tf.tile(tf.reshape(tf.lin_space(0.0, 255.0, ORIG_HEIGHT), shape=(ORIG_HEIGHT, 1, 1)), (1, ORIG_WIDTH, 1))
-    image_x_depth = image * depth
-    image = tf.concat([tf.cast(image, tf.float32), depth, image_x_depth], axis=2)
+    near_right = tf.reshape(tf.lin_space(0.0, 1.0, ORIG_WIDTH), shape=(1, ORIG_WIDTH, 1))
+    near_left = tf.reshape(tf.lin_space(1.0, 0.0, ORIG_WIDTH), shape=(1, ORIG_WIDTH, 1))
+    near_edge = tf.tile(near_right * near_left * 255, (ORIG_HEIGHT, 1, 1))
+    image = tf.concat([tf.cast(image, tf.float32), depth, near_edge], axis=2)
     return image
 
 def normalize(image):
