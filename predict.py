@@ -38,7 +38,7 @@ tf.flags.DEFINE_bool(
     """whether to save as npz""")
 
 tf.flags.DEFINE_enum(
-    'adjust', 'resize', enum_values=['resize', 'reflect', 'constant', 'symmetric'], help="""mode to adjust image size""")
+    'adjust', 'symmetric', enum_values=['resize', 'reflect', 'constant', 'symmetric'], help="""mode to adjust image size""")
 
 tf.flags.DEFINE_bool('deep_supervised', False, """whether to use deep-supervised model""")
 
