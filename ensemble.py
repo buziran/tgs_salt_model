@@ -76,16 +76,17 @@ def main(argv):
                 pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred + "-fliplr", "--horizontal_flip"]
                 print("pred args is {}".format(' '.join(pred_arg)))
                 subprocess.run(pred_arg)
-                path_preds.append(path_pred)
                 pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred + "-fliptb", "--vertical_flip"]
                 print("pred args is {}".format(' '.join(pred_arg)))
                 subprocess.run(pred_arg)
-                path_preds.append(path_pred)
                 pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred + "-fliplrtb",
                                                 "--horizontal_flip", "--vertical_flip"]
                 print("pred args is {}".format(' '.join(pred_arg)))
                 subprocess.run(pred_arg)
-                path_preds.append(path_pred)
+
+                path_preds.append(path_pred + "-fliplr")
+                path_preds.append(path_pred + "-fliptb")
+                path_preds.append(path_pred + "-fliplrtb")
 
 
         fn_dict = {"min": np.min, "max": np.max, "mean": np.mean, "median": np.median}
