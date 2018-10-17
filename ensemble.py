@@ -20,6 +20,7 @@ flags.DEFINE_string('submission', '../output/submission', """prefix of submissio
 flags.DEFINE_list('model', None, """path to model root directory""")
 flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
 flags.DEFINE_float('threshold', 0.5, """threshold of confidence to predict foreground""")
+flags.DEFINE_bool('tta', False, """whether to use TTA (notta + flip-lr + flip-tb + flip-lrtb)""")
 
 
 FLAGS = flags.FLAGS
@@ -70,6 +71,21 @@ def main(argv):
             print("pred args is {}".format(' '.join(pred_arg)))
             subprocess.run(pred_arg)
             path_preds.append(path_pred)
+            if FLAGS.tta:
+                pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred + "-fliplr", "--horizontal_flip"]
+                print("pred args is {}".format(' '.join(pred_arg)))
+                subprocess.run(pred_arg)
+                path_preds.append(path_pred)
+                pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred + "-fliptb", "--vertical_flip"]
+                print("pred args is {}".format(' '.join(pred_arg)))
+                subprocess.run(pred_arg)
+                path_preds.append(path_pred)
+                pred_arg = pred_arg_template + ["--model", d, "--prediction", path_pred + "-fliplrtb",
+                                                "--horizontal_flip", "--vertical_flip"]
+                print("pred args is {}".format(' '.join(pred_arg)))
+                subprocess.run(pred_arg)
+                path_preds.append(path_pred)
+
 
         fn_dict = {"min": np.min, "max": np.max, "mean": np.mean, "median": np.median}
         for suffix, fn in fn_dict.items():

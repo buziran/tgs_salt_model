@@ -40,6 +40,12 @@ tf.flags.DEFINE_bool(
 tf.flags.DEFINE_enum(
     'adjust', 'symmetric', enum_values=['resize', 'reflect', 'constant', 'symmetric'], help="""mode to adjust image size""")
 
+tf.flags.DEFINE_bool(
+    'horizontal_flip', False, """whether to apply horizontal flip""")
+
+tf.flags.DEFINE_bool(
+    'vertical_flip', False, """whether to apply vertical flip""")
+
 tf.flags.DEFINE_bool('deep_supervised', False, """whether to use deep-supervised model""")
 
 tf.flags.DEFINE_bool('with_depth', False, """whether to use depth information""")
@@ -100,11 +106,28 @@ def main(argv=None):
     image_preds = {}
     for id_batch in tqdm(range(num_batch)):
         xs, paths = sess.run(sample_tensor)
+
         ids = np.asarray([os.path.split(path)[1].decode() for path in paths])
 
         if id_batch == num_batch:
             break
+
+        if FLAGS.vertical_flip and FLAGS.horizontal_flip:
+            xs = xs[:, ::-1, ::-1, :]
+        elif FLAGS.vertical_flip:
+            xs = np.flip(xs, axis=(1))
+        elif FLAGS.horizontal_flip:
+            xs = np.flip(xs, axis=(2))
+
         ys_outputs = model.predict_on_batch(xs)
+
+        if FLAGS.vertical_flip and FLAGS.horizontal_flip:
+            ys_outputs = ys_outputs[:, ::-1, ::-1, :]
+        elif FLAGS.vertical_flip:
+            ys_outputs = np.flip(ys_outputs, axis=(1))
+        elif FLAGS.horizontal_flip:
+            ys_outputs = np.flip(ys_outputs, axis=(2))
+
         if not FLAGS.deep_supervised:
             ys_logits = ys_outputs
             ys_pred = sigmoid(ys_logits)
