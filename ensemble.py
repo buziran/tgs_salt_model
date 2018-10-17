@@ -21,6 +21,7 @@ flags.DEFINE_list('model', None, """path to model root directory""")
 flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
 flags.DEFINE_float('threshold', 0.5, """threshold of confidence to predict foreground""")
 flags.DEFINE_bool('tta', False, """whether to use TTA (notta + flip-lr + flip-tb + flip-lrtb)""")
+flags.DEFINE_list('ensemble_fn', None, """ensemble_fn""")
 
 
 FLAGS = flags.FLAGS
@@ -88,6 +89,9 @@ def main(argv):
 
 
         fn_dict = {"min": np.min, "max": np.max, "mean": np.mean, "median": np.median}
+        if FLAGS.ensemble_fn is not None:
+            fn_dict = {k:v for k,v in fn_dict.items() if k in FLAGS.ensemble_fn}
+
         for suffix, fn in fn_dict.items():
             output_file = FLAGS.submission + "_" + suffix + ".csv"
             if FLAGS.delete:
