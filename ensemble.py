@@ -22,6 +22,7 @@ flags.DEFINE_bool('delete', True, """whether to delete temporary directory""")
 flags.DEFINE_float('threshold', 0.5, """threshold of confidence to predict foreground""")
 flags.DEFINE_bool('tta', False, """whether to use TTA (notta + flip-lr + flip-tb + flip-lrtb)""")
 flags.DEFINE_list('ensemble_fn', None, """ensemble_fn""")
+flags.DEFINE_bool('npz', True, """whether to save as npz""")
 
 
 FLAGS = flags.FLAGS
@@ -55,6 +56,10 @@ def load_npz(path_pred):
     npzfile = np.load(path_pred)
     return npzfile['arr_0']
 
+def save_npz(y_pred, id, path_out):
+    filename = os.path.join(path_out, os.path.splitext(id)[0] + '.npz')
+    # y_pred = np.squeeze(y_pred, axis=3)
+    np.savez(filename, y_pred)
 
 def main(argv):
 
@@ -108,7 +113,7 @@ def ensemble_pred(path_preds, output_file, fn, img_dir=None):
     pred_dict = {}
     pred_files = list(filter(lambda x: x.endswith('.npz'), os.listdir(path_preds[0])))
 
-    for pred_file in tqdm(pred_files):
+    for pred_file in tqdm(pred_files, ascii=True):
         preds = []
         for d in path_preds:
             path_pred = os.path.join(d, pred_file)
@@ -123,6 +128,8 @@ def ensemble_pred(path_preds, output_file, fn, img_dir=None):
             y_pred = np.clip(ensembled * 255, 0, 255).astype(np.uint8)
             filename = os.path.join(img_dir, os.path.splitext(pred_file)[0] + '.png')
             imsave(filename, y_pred)
+            if FLAGS.npz:
+                save_npz(ensembled, pred_file, img_dir)
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     sub = pd.DataFrame.from_dict(pred_dict, orient='index')
